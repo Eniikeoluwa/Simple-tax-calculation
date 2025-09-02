@@ -1,0 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Nova.Domain.Entities;
+
+namespace Nova.Infrastructure.Configurations;
+
+public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
+{
+    public void Configure(EntityTypeBuilder<Payment> builder)
+    {
+        builder.ConfigureBase();
+        builder.ToTable("Payments");
+
+        builder.Property(p => p.InvoiceNumber).HasMaxLength(100);
+        builder.Property(p => p.GrossAmount).HasColumnType("decimal(18,2)");
+        builder.Property(p => p.VatAmount).HasColumnType("decimal(18,2)");
+        builder.Property(p => p.WhtAmount).HasColumnType("decimal(18,2)");
+        builder.Property(p => p.NetAmount).HasColumnType("decimal(18,2)");
+        builder.Property(p => p.Status).HasMaxLength(50);
+        builder.Property(p => p.Reference).HasMaxLength(200);
+
+        builder.HasOne(p => p.Vendor).WithMany(v => v.Payments).HasForeignKey(p => p.VendorId);
+        builder.HasOne(p => p.BulkSchedule).WithMany(b => b.Payments).HasForeignKey(p => p.BulkScheduleId);
+    }
+}

@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/Nova.API.props" />
+</Project>
