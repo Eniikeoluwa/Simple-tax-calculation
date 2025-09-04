@@ -10,3 +10,4 @@
 /Users/macbook/novastart/src/Nova.Domain/obj/Debug/net9.0/Nova.Domain.pdb
 /Users/macbook/novastart/src/Nova.Domain/obj/Debug/net9.0/ref/Nova.Domain.dll
 /Users/macbook/novastart/src/Nova.Domain/obj/Debug/net9.0/Nova.Domain.csproj.AssemblyReference.cache
+/Users/macbook/novastart/src/Nova.Domain/obj/Debug/net9.0/Nova.Domain.sourcelink.json

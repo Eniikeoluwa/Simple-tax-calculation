@@ -15,3 +15,4 @@
 /Users/macbook/novastart/src/Nova.Infrastructure/obj/Debug/net9.0/Nova.Infrastructure.pdb
 /Users/macbook/novastart/src/Nova.Infrastructure/obj/Debug/net9.0/Nova.Infrastructure.genruntimeconfig.cache
 /Users/macbook/novastart/src/Nova.Infrastructure/obj/Debug/net9.0/ref/Nova.Infrastructure.dll
+/Users/macbook/novastart/src/Nova.Infrastructure/obj/Debug/net9.0/Nova.Infrastructure.sourcelink.json

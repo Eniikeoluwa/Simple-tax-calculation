@@ -21,5 +21,15 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.HasOne(p => p.Vendor).WithMany(v => v.Payments).HasForeignKey(p => p.VendorId);
         builder.HasOne(p => p.BulkSchedule).WithMany(b => b.Payments).HasForeignKey(p => p.BulkScheduleId);
+        // explicitly configure user relations to avoid ambiguity when multiple navigations to User exist
+        builder.HasOne(p => p.CreatedByUser)
+            .WithMany(u => u.CreatedPayments)
+            .HasForeignKey(p => p.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(p => p.ApprovedByUser)
+            .WithMany() // no inverse navigation defined on User
+            .HasForeignKey(p => p.ApprovedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

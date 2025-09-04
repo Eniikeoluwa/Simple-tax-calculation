@@ -1375,6 +1375,7 @@
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "9.0.8",
+          "Microsoft.Extensions.Configuration.Json": "9.0.0",
           "Nova.Domain": "1.0.0",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4"
         },
@@ -3847,11 +3848,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/macbook/novastart/src/Nova.API/Nova.API.csproj",
+      "projectUniqueName": "/Users/macbook/novastart/src/NOVA.API/Nova.API.csproj",
       "projectName": "Nova.API",
-      "projectPath": "/Users/macbook/novastart/src/Nova.API/Nova.API.csproj",
+      "projectPath": "/Users/macbook/novastart/src/NOVA.API/Nova.API.csproj",
       "packagesPath": "/Users/macbook/.nuget/packages/",
-      "outputPath": "/Users/macbook/novastart/src/Nova.API/obj/",
+      "outputPath": "/Users/macbook/novastart/src/NOVA.API/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/macbook/.nuget/NuGet/NuGet.Config"

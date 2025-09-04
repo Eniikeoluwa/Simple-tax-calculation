@@ -9,3 +9,4 @@
 /Users/macbook/novastart/src/Nova.Contracts/obj/Debug/net9.0/refint/Nova.Contracts.dll
 /Users/macbook/novastart/src/Nova.Contracts/obj/Debug/net9.0/Nova.Contracts.pdb
 /Users/macbook/novastart/src/Nova.Contracts/obj/Debug/net9.0/ref/Nova.Contracts.dll
+/Users/macbook/novastart/src/Nova.Contracts/obj/Debug/net9.0/Nova.Contracts.sourcelink.json
