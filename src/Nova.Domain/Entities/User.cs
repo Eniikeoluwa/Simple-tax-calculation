@@ -13,6 +13,7 @@ public class User : BaseEntity
     public string? TenantId { get; set; }
     public virtual ICollection<Payment> CreatedPayments { get; set; }
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
+    public virtual ICollection<TenantUser> TenantUsers { get; set; }
 
     public string FullName => $"{FirstName} {LastName}";
 
@@ -20,6 +21,7 @@ public class User : BaseEntity
     {
     CreatedPayments = new HashSet<Payment>();
         RefreshTokens = new HashSet<RefreshToken>();
+        TenantUsers = new HashSet<TenantUser>();
         IsActive = true;
     }
 }
