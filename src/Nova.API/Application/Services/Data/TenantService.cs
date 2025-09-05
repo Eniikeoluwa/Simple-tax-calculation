@@ -1,0 +1,143 @@
+using FluentResults;
+using Microsoft.EntityFrameworkCore;
+using Nova.API.Application.Services.Common;
+using Nova.Domain.Entities;
+using Nova.Infrastructure;
+
+namespace Nova.API.Application.Services.Data;
+
+public interface IVendorService
+{
+    Task<Result<Vendor>> CreateVendorAsync(Vendor vendor);
+    Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId);
+    Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
+    Task<Result<bool>> UpdateVendorAsync(Vendor vendor);
+    Task<Result<bool>> DeleteVendorAsync(string vendorId);
+}
+
+public class TenantService : BaseDataService, ITenantService
+{
+    public TenantService(AppDbContext context, IDateService dateService) : base(context, dateService)
+    {
+    }
+
+    public async Task<Result<Tenant>> CreateTenantAsync(string name, string description, string address, string phoneNumber, string email)
+    {
+        try
+        {
+            var tenant = new Tenant
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = name,
+                Description = description,
+                Code = GenerateTenantCode(name),
+                Address = address,
+                PhoneNumber = phoneNumber,
+                Email = email,
+                IsActive = true,
+                CreatedAt = _dateService.UtcNow,
+                UpdatedAt = _dateService.UtcNow
+            };
+
+            _context.Tenants.Add(tenant);
+            await _context.SaveChangesAsync();
+
+            return Result.Ok(tenant);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to create tenant: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<Tenant>> GetTenantByIdAsync(string tenantId)
+    {
+        try
+        {
+            var tenant = await _context.Tenants
+                .Include(t => t.TenantUsers)
+                .ThenInclude(tu => tu.User)
+                .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+            if (tenant == null)
+                return Result.Fail("Tenant not found");
+
+            return Result.Ok(tenant);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to get tenant: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<List<Tenant>>> GetAllTenantsAsync()
+    {
+        try
+        {
+            var tenants = await _context.Tenants
+                .Include(t => t.TenantUsers)
+                .ThenInclude(tu => tu.User)
+                .Where(t => t.IsActive)
+                .ToListAsync();
+
+            return Result.Ok(tenants);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to get tenants: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<bool>> UpdateTenantAsync(Tenant tenant)
+    {
+        try
+        {
+            var existingTenant = await _context.Tenants.FindAsync(tenant.Id);
+            if (existingTenant == null)
+                return Result.Fail("Tenant not found");
+
+            existingTenant.Name = tenant.Name;
+            existingTenant.Description = tenant.Description;
+            existingTenant.Address = tenant.Address;
+            existingTenant.PhoneNumber = tenant.PhoneNumber;
+            existingTenant.Email = tenant.Email;
+            existingTenant.IsActive = tenant.IsActive;
+            existingTenant.UpdatedAt = _dateService.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return Result.Ok(true);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to update tenant: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<bool>> DeleteTenantAsync(string tenantId)
+    {
+        try
+        {
+            var tenant = await _context.Tenants.FindAsync(tenantId);
+            if (tenant == null)
+                return Result.Fail("Tenant not found");
+
+            tenant.IsActive = false;
+            tenant.UpdatedAt = _dateService.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return Result.Ok(true);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to delete tenant: {ex.Message}");
+        }
+    }
+
+    private string GenerateTenantCode(string name)
+    {
+        var cleanName = new string(name.Where(char.IsLetterOrDigit).ToArray()).ToUpper();
+        var code = cleanName.Length >= 3 ? cleanName.Substring(0, 3) : cleanName;
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+        return $"{code}{timestamp.Substring(timestamp.Length - 4)}";
+    }
+}
