@@ -11,7 +11,8 @@ public class AppDbContext : DbContext
     {
     }
     public DbSet<User> Users { get; set; }
-    // Tenant and TenantUser removed; keep only TenantId on User
+    public DbSet<Tenant> Tenants { get; set; }
+    public DbSet<TenantUser> TenantUsers { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Bank> Banks { get; set; }
     public DbSet<BulkSchedule> BulkSchedules { get; set; }
@@ -22,12 +23,12 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new Configurations.BankConfiguration());
-    // TenantUserConfiguration removed
+        modelBuilder.ApplyConfiguration(new Configurations.TenantConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.TenantUserConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.BulkScheduleConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.GapsScheduleConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.PaymentConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.RefreshTokenConfiguration());
-    // TenantConfiguration removed
         modelBuilder.ApplyConfiguration(new Configurations.UserConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.VendorConfiguration());
         base.OnModelCreating(modelBuilder);
