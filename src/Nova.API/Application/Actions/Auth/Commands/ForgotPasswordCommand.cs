@@ -52,7 +52,6 @@ public class ForgotPasswordCommandValidator : FluentValidation.AbstractValidator
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email format.");
-            Console.WriteLine("Forgot password request received for email: " + x.Email);
     }
 }
 
