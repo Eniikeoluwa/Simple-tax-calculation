@@ -6,12 +6,6 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth;
 
-public class LoginCommand : IRequest<Result<AuthResponse>>
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
-
 public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
 {
     private readonly IAuthService _authService;
@@ -30,7 +24,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         if (!validation.IsValid)
             return Result.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage)));
 
-        var userResult = await _authService.ValidateUserAsync(request.Email, request.Password);
+        var userResult = await _authService.ValidateUserAsync(request.request.Email, request.request.Password);
         if (userResult.IsFailed)
             return Result.Fail(userResult.Errors);
 
@@ -56,12 +50,12 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         });
     }
 }
-
-public class LoginCommandValidator : AbstractValidator<LoginCommand>
-{
-    public LoginCommandValidator()
+public record LoginCommand(LoginRequest request) : IRequest<Result<AuthResponse>>;
+    public class LoginCommandValidator : AbstractValidator<LoginCommand>
     {
-        RuleFor(x => x.Email).NotEmpty().WithMessage("Email is required.").EmailAddress().WithMessage("Invalid email format.");
-        RuleFor(x => x.Password).NotEmpty().WithMessage("Password is required.");
+        public LoginCommandValidator()
+        {
+            RuleFor(x => x.request.Email).NotEmpty().WithMessage("Email is required.").EmailAddress().WithMessage("Invalid email format.");
+            RuleFor(x => x.request.Password).NotEmpty().WithMessage("Password is required.");
+        }
     }
-}

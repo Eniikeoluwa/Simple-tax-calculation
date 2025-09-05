@@ -6,11 +6,6 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth;
 
-public class RefreshTokenCommand : IRequest<Result<TokenResponse>>
-{
-    public string RefreshToken { get; set; } = string.Empty;
-}
-
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<TokenResponse>>
 {
     private readonly IAuthService _authService;
@@ -29,7 +24,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         if (!validation.IsValid)
             return Result.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage)));
 
-        var existingRtResult = await _authService.GetRefreshTokenAsync(request.RefreshToken);
+        var existingRtResult = await _authService.GetRefreshTokenAsync(request.request.RefreshToken);
         if (existingRtResult.IsFailed)
             return Result.Fail(existingRtResult.Errors);
 
@@ -60,11 +55,12 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         });
     }
 }
+public record RefreshTokenCommand(RefreshTokenRequest request) : IRequest<Result<TokenResponse>>;
 
-public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
-{
-    public RefreshTokenCommandValidator()
+    public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
     {
-        RuleFor(x => x.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
+        public RefreshTokenCommandValidator()
+        {
+            RuleFor(x => x.request.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
+        }
     }
-}
