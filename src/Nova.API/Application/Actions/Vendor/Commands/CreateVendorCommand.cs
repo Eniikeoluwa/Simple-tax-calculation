@@ -2,7 +2,7 @@ using FluentResults;
 using FluentValidation;
 using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
-using Nova.Contracts.Vendor;
+using Nova.Contracts.Models;
 using Nova.Domain.Entities;
 
 namespace Nova.API.Application.Actions.Vendor;

@@ -2,7 +2,7 @@ using FluentResults;
 using FluentValidation;
 using MediatR;
 using Nova.API.Application.Services.Data;
-using Nova.Contracts.Vendor;
+using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Vendor;
 

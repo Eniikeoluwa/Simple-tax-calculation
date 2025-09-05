@@ -1,7 +1,7 @@
 using FluentResults;
 using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
-using Nova.Contracts.Auth;
+using Nova.Contracts.Models;
 using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth;

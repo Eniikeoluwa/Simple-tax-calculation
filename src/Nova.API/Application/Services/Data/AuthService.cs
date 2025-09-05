@@ -3,6 +3,7 @@ using FluentResults;
 using Microsoft.EntityFrameworkCore;
 using Nova.Domain.Entities;
 using Nova.Infrastructure;
+using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Services.Data;
 
@@ -17,8 +18,8 @@ public interface IAuthService
     Task<Result> CreatePasswordResetTokenAsync(string userId, string token, DateTime expiresAt);
     Task<Result<User>> ValidatePasswordResetTokenAsync(ResetPasswordRequest request);
     Task<Result> UpdatePasswordAsync(string userId, string newPassword);
-    string HashPassword(string password);
-    bool VerifyPassword(string password, string hashedPassword);
+    Task<string> HashPassword(string password);
+    Task<bool> VerifyPassword(string password, string hashedPassword);
 }
 
 public class AuthService : IAuthService, BaseDataService

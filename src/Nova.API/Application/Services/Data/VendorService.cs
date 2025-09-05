@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Nova.API.Application.Services.Common;
 using Nova.Domain.Entities;
 using Nova.Infrastructure;
+using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Services.Data;
 

@@ -1,9 +1,10 @@
-using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nova.API.Application.Actions.Vendor;
 using Nova.API.Controllers;
-using Nova.Contracts.Vendor;
+using Nova.API.Application.Common;
+using Nova.Contracts.Models;
 
 namespace Nova.API.Controllers;
 
@@ -12,51 +13,21 @@ namespace Nova.API.Controllers;
 [Route("api/[controller]")]
 public class VendorController : BaseController
 {
-    public VendorController(IMediator mediator) : base(mediator)
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateVendor(
+        [FromServices] IFeatureAction<CreateVendorCommand, VendorResponse> action,
+        [FromBody] CreateVendorRequest request)
     {
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequest request)
-    {
-        var command = new CreateVendorCommand
-        {
-            Name = request.Name,
-            Code = request.Code,
-            AccountName = request.AccountName,
-            AccountNumber = request.AccountNumber,
-            Address = request.Address,
-            PhoneNumber = request.PhoneNumber,
-            Email = request.Email,
-            TaxIdentificationNumber = request.TaxIdentificationNumber,
-            TaxType = request.TaxType,
-            VatRate = request.VatRate,
-            WhtRate = request.WhtRate,
-            BankId = request.BankId,
-            TenantId = request.TenantId
-        };
-
-        var result = await _mediator.Send(command);
-
-        if (result.IsFailed)
-            return BadRequest(result.Errors.Select(e => e.Message));
-
-        return Ok(result.Value);
+        var command = new CreateVendorCommand(request);
+        return await SendAction(action, command);
     }
 
     [HttpGet("tenant/{tenantId}")]
-    public async Task<IActionResult> GetVendorsByTenant(string tenantId)
+    public async Task<IActionResult> GetVendorsByTenant(
+        [FromServices] IFeatureAction<GetVendorsQuery, GetVendorsResponse> action,
+        string tenantId)
     {
-        var query = new GetVendorsQuery
-        {
-            TenantId = tenantId
-        };
-
-        var result = await _mediator.Send(query);
-
-        if (result.IsFailed)
-            return BadRequest(result.Errors.Select(e => e.Message));
-
-        return Ok(result.Value);
+        var query = new GetVendorsQuery { TenantId = tenantId };
+        return await SendAction(action, query);
     }
 }

@@ -1,7 +1,7 @@
 using FluentResults;
 using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
-using Nova.Contracts.Tenant;
+using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Tenant;
 
