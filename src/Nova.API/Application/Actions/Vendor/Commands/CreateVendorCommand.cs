@@ -7,67 +7,52 @@ using Nova.Domain.Entities;
 
 namespace Nova.API.Application.Actions.Vendor;
 
-public class CreateVendorCommand : IRequest<Result<VendorResponse>>
-{
-    public string Name { get; set; } = string.Empty;
-    public string Code { get; set; } = string.Empty;
-    public string AccountName { get; set; } = string.Empty;
-    public string AccountNumber { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public string PhoneNumber { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string TaxIdentificationNumber { get; set; } = string.Empty;
-    public string TaxType { get; set; } = "Both";
-    public decimal VatRate { get; set; } = 7.5m;
-    public decimal WhtRate { get; set; } = 2.0m;
-    public string BankId { get; set; } = string.Empty;
-    public string TenantId { get; set; } = string.Empty;
-}
+public record CreateVendorCommand(CreateVendorRequest request) : IRequest<Result<VendorResponse>>;
 
 public class CreateVendorCommandValidator : AbstractValidator<CreateVendorCommand>
 {
     public CreateVendorCommandValidator()
     {
-        RuleFor(x => x.Name)
+        RuleFor(x => x.request.Name)
             .NotEmpty()
             .MaximumLength(200)
             .WithMessage("Vendor name is required and must not exceed 200 characters");
 
-        RuleFor(x => x.Code)
+        RuleFor(x => x.request.Code)
             .NotEmpty()
             .MaximumLength(50)
             .WithMessage("Vendor code is required and must not exceed 50 characters");
 
-        RuleFor(x => x.AccountName)
+        RuleFor(x => x.request.AccountName)
             .NotEmpty()
             .MaximumLength(200)
             .WithMessage("Account name is required and must not exceed 200 characters");
 
-        RuleFor(x => x.AccountNumber)
+        RuleFor(x => x.request.AccountNumber)
             .NotEmpty()
             .MaximumLength(50)
             .WithMessage("Account number is required and must not exceed 50 characters");
 
-        RuleFor(x => x.Email)
+        RuleFor(x => x.request.Email)
             .EmailAddress()
-            .When(x => !string.IsNullOrEmpty(x.Email))
+            .When(x => !string.IsNullOrEmpty(x.request.Email))
             .WithMessage("Please provide a valid email address");
 
-        RuleFor(x => x.TaxType)
+        RuleFor(x => x.request.TaxType)
             .Must(x => new[] { "None", "VAT", "WHT", "Both" }.Contains(x))
             .WithMessage("Tax type must be one of: None, VAT, WHT, Both");
 
-        RuleFor(x => x.VatRate)
+        RuleFor(x => x.request.VatRate)
             .GreaterThanOrEqualTo(0)
             .LessThanOrEqualTo(100)
             .WithMessage("VAT rate must be between 0 and 100");
 
-        RuleFor(x => x.WhtRate)
+        RuleFor(x => x.request.WhtRate)
             .GreaterThanOrEqualTo(0)
             .LessThanOrEqualTo(100)
             .WithMessage("WHT rate must be between 0 and 100");
 
-        RuleFor(x => x.TenantId)
+        RuleFor(x => x.request.TenantId)
             .NotEmpty()
             .WithMessage("Tenant ID is required");
     }
@@ -96,21 +81,21 @@ public class CreateVendorCommandHandler : IRequestHandler<CreateVendorCommand, R
         }
 
         // Check tenant exists
-        var tenant = await _context.Tenants.FindAsync(new object[] { request.TenantId }, cancellationToken);
+        var tenant = await _context.Tenants.FindAsync(new object[] { request.request.TenantId }, cancellationToken);
         if (tenant == null)
             return Result.Fail("Tenant not found");
 
         // Check duplicate vendor name within tenant
         var existing = await _context.Vendors
-            .FirstOrDefaultAsync(v => v.Name.ToLower() == request.Name.ToLower() && v.TenantId == request.TenantId, cancellationToken);
+            .FirstOrDefaultAsync(v => v.Name.ToLower() == request.request.Name.ToLower() && v.TenantId == request.request.TenantId, cancellationToken);
 
         if (existing != null)
             return Result.Fail("A vendor with this name already exists in this tenant");
 
         // Validate bank
-        if (!string.IsNullOrEmpty(request.BankId))
+        if (!string.IsNullOrEmpty(request.request.BankId))
         {
-            var bank = await _context.Banks.FindAsync(new object[] { request.BankId }, cancellationToken);
+            var bank = await _context.Banks.FindAsync(new object[] { request.request.BankId }, cancellationToken);
             if (bank == null)
                 return Result.Fail("Bank not found");
         }
@@ -118,19 +103,19 @@ public class CreateVendorCommandHandler : IRequestHandler<CreateVendorCommand, R
         var vendor = new Domain.Entities.Vendor
         {
             Id = Guid.NewGuid().ToString(),
-            Name = request.Name,
-            Code = request.Code,
-            AccountName = request.AccountName,
-            AccountNumber = request.AccountNumber,
-            Address = request.Address,
-            PhoneNumber = request.PhoneNumber,
-            Email = request.Email,
-            TaxIdentificationNumber = request.TaxIdentificationNumber,
-            TaxType = request.TaxType,
-            VatRate = request.VatRate,
-            WhtRate = request.WhtRate,
-            BankId = request.BankId,
-            TenantId = request.TenantId,
+            Name = request.request.Name,
+            Code = request.request.Code,
+            AccountName = request.request.AccountName,
+            AccountNumber = request.request.AccountNumber,
+            Address = request.request.Address,
+            PhoneNumber = request.request.PhoneNumber,
+            Email = request.request.Email,
+            TaxIdentificationNumber = request.request.TaxIdentificationNumber,
+            TaxType = request.request.TaxType,
+            VatRate = request.request.VatRate,
+            WhtRate = request.request.WhtRate,
+            BankId = request.request.BankId,
+            TenantId = request.request.TenantId,
             IsActive = true,
             CreatedAt = _dateService.UtcNow,
             UpdatedAt = _dateService.UtcNow

@@ -1,4 +1,4 @@
-namespace Nova.Contracts.Vendor;
+namespace Nova.Contracts.Models;
 
 public class CreateVendorRequest
 {
