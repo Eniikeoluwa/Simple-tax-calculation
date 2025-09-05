@@ -1,6 +1,5 @@
 using FluentResults;
-using MediatR;
-using Nova.API.Application.Services.Common;
+using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Auth;
 using FluentValidation;
@@ -45,9 +44,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         // revoke old refresh token
         await _authService.RevokeRefreshTokenAsync(existingRt.Token);
 
-    var newAccessToken = _tokenService.GenerateAccessToken(user);
-    var newRefreshToken = _tokenService.GenerateRefreshToken();
-    var refreshTokenExpiry = _tokenService.GetRefreshTokenExpiryDate();
+        var newAccessToken = _tokenService.GenerateAccessToken(user);
+        var newRefreshToken = _tokenService.GenerateRefreshToken();
+        var refreshTokenExpiry = _tokenService.GetRefreshTokenExpiryDate();
 
         var createRtResult = await _authService.CreateRefreshTokenAsync(user.Id, newRefreshToken, refreshTokenExpiry);
         if (createRtResult.IsFailed)
@@ -62,14 +61,6 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     }
 }
 
-// Validator (inlined)
-public class RefreshTokenCommandValidator : FluentValidation.AbstractValidator<RefreshTokenCommand>
-{
-    public RefreshTokenCommandValidator()
-    {
-        RuleFor(x => x.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
-    }
-}
 public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
 {
     public RefreshTokenCommandValidator()

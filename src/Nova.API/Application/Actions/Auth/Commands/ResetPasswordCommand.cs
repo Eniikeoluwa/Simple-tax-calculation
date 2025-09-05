@@ -1,7 +1,8 @@
 using FluentResults;
-using MediatR;
+using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Auth;
+using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth;
 
@@ -36,8 +37,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
     }
 }
 
-// Validator (inlined)
-public class ResetPasswordCommandValidator : FluentValidation.AbstractValidator<ResetPasswordCommand>
+public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
 {
     public ResetPasswordCommandValidator()
     {

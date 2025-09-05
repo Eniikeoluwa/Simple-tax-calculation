@@ -1,6 +1,5 @@
 using FluentResults;
-using MediatR;
-using Nova.API.Application.Services.Common;
+using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Auth;
 using FluentValidation;
@@ -37,9 +36,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
 
         var user = userResult.Value;
 
-    var accessToken = _tokenService.GenerateAccessToken(user);
-    var refreshToken = _tokenService.GenerateRefreshToken();
-    var refreshTokenExpiry = _tokenService.GetRefreshTokenExpiryDate();
+        var accessToken = _tokenService.GenerateAccessToken(user);
+        var refreshToken = _tokenService.GenerateRefreshToken();
+        var refreshTokenExpiry = _tokenService.GetRefreshTokenExpiryDate();
 
         var refreshTokenResult = await _authService.CreateRefreshTokenAsync(user.Id, refreshToken, refreshTokenExpiry);
         if (refreshTokenResult.IsFailed)
@@ -58,15 +57,6 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
     }
 }
 
-// Validator (inlined)
-public class LoginCommandValidator : FluentValidation.AbstractValidator<LoginCommand>
-{
-    public LoginCommandValidator()
-    {
-        RuleFor(x => x.Email).NotEmpty().WithMessage("Email is required.").EmailAddress().WithMessage("Invalid email format.");
-        RuleFor(x => x.Password).NotEmpty().WithMessage("Password is required.");
-    }
-}
 public class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
     public LoginCommandValidator()

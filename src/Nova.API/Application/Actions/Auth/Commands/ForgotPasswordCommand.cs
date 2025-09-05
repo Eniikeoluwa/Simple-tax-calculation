@@ -1,8 +1,7 @@
 
 using FluentResults;
-using MediatR;
+using Nova.API.Application.Common;
 using FluentValidation;
-using Nova.API.Application.Services.Common;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Auth;
 
@@ -32,8 +31,8 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 
         var user = userResult.Value;
 
-    var resetToken = _tokenService.GeneratePasswordResetToken();
-    var expiry = _tokenService.GetPasswordResetTokenExpiryDate();
+        var resetToken = _tokenService.GeneratePasswordResetToken();
+        var expiry = _tokenService.GetPasswordResetTokenExpiryDate();
 
         var createResetResult = await _authService.CreatePasswordResetTokenAsync(user.Id, resetToken, expiry);
         if (createResetResult.IsFailed)
@@ -41,17 +40,6 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 
         // In production you'd email the token. For now return success.
         return Result.Ok();
-    }
-}
-
-// Validator (inlined)
-public class ForgotPasswordCommandValidator : FluentValidation.AbstractValidator<ForgotPasswordCommand>
-{
-    public ForgotPasswordCommandValidator()
-    {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("Invalid email format.");
     }
 }
 

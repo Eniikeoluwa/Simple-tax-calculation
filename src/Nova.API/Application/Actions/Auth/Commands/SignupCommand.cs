@@ -1,4 +1,4 @@
-using Nova.API.Application.Actions.Common;
+using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Auth;
 using FluentResults;

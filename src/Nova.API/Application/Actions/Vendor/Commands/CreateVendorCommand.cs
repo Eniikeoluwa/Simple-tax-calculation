@@ -1,6 +1,6 @@
 using FluentResults;
 using FluentValidation;
-using MediatR;
+using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Vendor;
 using Nova.Domain.Entities;
