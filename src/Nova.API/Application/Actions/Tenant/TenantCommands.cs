@@ -5,14 +5,7 @@ using Nova.Contracts.Tenant;
 
 namespace Nova.API.Application.Actions.Tenant;
 
-public class CreateTenantCommand : IRequest<Result<TenantResponse>>
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public string PhoneNumber { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-}
+public record CreateTenantCommand(CreateTenantRequest request) : IRequest<Result<TenantResponse>>;
 
 public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, Result<TenantResponse>>
 {
@@ -26,11 +19,11 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, R
     public async Task<Result<TenantResponse>> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
         var tenantResult = await _tenantService.CreateTenantAsync(
-            request.Name,
-            request.Description,
-            request.Address,
-            request.PhoneNumber,
-            request.Email
+            request.request.Name,
+            request.request.Description,
+            request.request.Address,
+            request.request.PhoneNumber,
+            request.request.Email
         );
 
         if (tenantResult.IsFailed)
