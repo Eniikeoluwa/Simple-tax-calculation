@@ -7,11 +7,6 @@ using Nova.Contracts.Auth;
 
 namespace Nova.API.Application.Actions.Auth;
 
-public class ForgotPasswordCommand : IRequest<Result>
-{
-    public string Email { get; set; } = string.Empty;
-}
-
 public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, Result>
 {
     private readonly IAuthService _authService;
@@ -25,7 +20,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 
     public async Task<Result> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
-        var userResult = await _authService.GetUserByEmailAsync(request.Email);
+        var userResult = await _authService.GetUserByEmailAsync(request.request.Email);
         if (userResult.IsFailed)
             return Result.Fail(userResult.Errors);
 
@@ -43,12 +38,14 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     }
 }
 
-public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCommand>
-{
-    public ForgotPasswordCommandValidator()
+public record ForgotPasswordCommand(ForgotPasswordRequest request) : IRequest<Result>;
+
+    public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCommand>
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("Email must be a valid email address.");
+        public ForgotPasswordCommandValidator()
+        {
+            RuleFor(x => x.request.Email)
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Email must be a valid email address.");
+        }
     }
-}

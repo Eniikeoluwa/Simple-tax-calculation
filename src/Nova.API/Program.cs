@@ -11,16 +11,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add application services
 builder.Services.AddApplicationServices();
 
-// Add JWT Authentication
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Add controllers
 builder.Services.AddControllers();
 
-// Add Swagger with JWT
 builder.Services.AddSwaggerWithJwt();
 
-// Add CORS
 builder.Services.AddCorsPolicy();
 
 var app = builder.Build();
