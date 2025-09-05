@@ -60,69 +60,20 @@ public class CreateVendorCommandValidator : AbstractValidator<CreateVendorComman
 
 public class CreateVendorCommandHandler : IRequestHandler<CreateVendorCommand, Result<VendorResponse>>
 {
-    private readonly AppDbContext _context;
-    private readonly IDateService _dateService;
-    private readonly IValidator<CreateVendorCommand> _validator;
+    private readonly IVendorService _vendorService;
 
-    public CreateVendorCommandHandler(AppDbContext context, IDateService dateService, IValidator<CreateVendorCommand> validator)
+    public CreateVendorCommandHandler(IVendorService vendorService)
     {
-        _context = context;
-        _dateService = dateService;
-        _validator = validator;
+        _vendorService = vendorService;
     }
 
     public async Task<Result<VendorResponse>> Handle(CreateVendorCommand request, CancellationToken cancellationToken)
     {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
-            return Result.Fail(string.Join(", ", errors));
-        }
+        var vendorResult = await _vendorService.CreateVendorAsync(request.request);
+        if (vendorResult.IsFailed)
+            return Result.Fail(vendorResult.Errors);
 
-        // Check tenant exists
-        var tenant = await _context.Tenants.FindAsync(new object[] { request.request.TenantId }, cancellationToken);
-        if (tenant == null)
-            return Result.Fail("Tenant not found");
-
-        // Check duplicate vendor name within tenant
-        var existing = await _context.Vendors
-            .FirstOrDefaultAsync(v => v.Name.ToLower() == request.request.Name.ToLower() && v.TenantId == request.request.TenantId, cancellationToken);
-
-        if (existing != null)
-            return Result.Fail("A vendor with this name already exists in this tenant");
-
-        // Validate bank
-        if (!string.IsNullOrEmpty(request.request.BankId))
-        {
-            var bank = await _context.Banks.FindAsync(new object[] { request.request.BankId }, cancellationToken);
-            if (bank == null)
-                return Result.Fail("Bank not found");
-        }
-
-        var vendor = new Domain.Entities.Vendor
-        {
-            Id = Guid.NewGuid().ToString(),
-            Name = request.request.Name,
-            Code = request.request.Code,
-            AccountName = request.request.AccountName,
-            AccountNumber = request.request.AccountNumber,
-            Address = request.request.Address,
-            PhoneNumber = request.request.PhoneNumber,
-            Email = request.request.Email,
-            TaxIdentificationNumber = request.request.TaxIdentificationNumber,
-            TaxType = request.request.TaxType,
-            VatRate = request.request.VatRate,
-            WhtRate = request.request.WhtRate,
-            BankId = request.request.BankId,
-            TenantId = request.request.TenantId,
-            IsActive = true,
-            CreatedAt = _dateService.UtcNow,
-            UpdatedAt = _dateService.UtcNow
-        };
-
-        _context.Vendors.Add(vendor);
-        await _context.SaveChangesAsync(cancellationToken);
+        var vendor = vendorResult.Value;
 
         return Result.Ok(new VendorResponse
         {

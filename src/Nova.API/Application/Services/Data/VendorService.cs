@@ -8,7 +8,7 @@ namespace Nova.API.Application.Services.Data;
 
 public interface IVendorService
 {
-    Task<Result<Vendor>> CreateVendorAsync(Vendor vendor);
+    Task<Result<Vendor>> CreateVendorAsync(CreateVendorRequest request);
     Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId);
     Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
     Task<Result<bool>> UpdateVendorAsync(Vendor vendor);
@@ -21,33 +21,50 @@ public class VendorService : BaseDataService, IVendorService
     {
     }
 
-    public async Task<Result<Vendor>> CreateVendorAsync(Vendor vendor)
+    public async Task<Result<Vendor>> CreateVendorAsync(CreateVendorRequest request)
     {
         try
         {
             // Check if vendor with same name exists in the tenant
             var existingVendor = await _context.Vendors
-                .FirstOrDefaultAsync(v => v.Name.ToLower() == vendor.Name.ToLower() && v.TenantId == vendor.TenantId);
+                .FirstOrDefaultAsync(v => v.Name.ToLower() == request.Name.ToLower() && v.TenantId == request.TenantId);
 
             if (existingVendor != null)
                 return Result.Fail("A vendor with this name already exists in this tenant");
 
             // Validate tenant exists
-            var tenant = await _context.Tenants.FindAsync(vendor.TenantId);
+            var tenant = await _context.Tenants.FindAsync(request.TenantId);
             if (tenant == null)
                 return Result.Fail("Tenant not found");
 
             // Validate bank exists if provided
-            if (!string.IsNullOrEmpty(vendor.BankId))
+            if (!string.IsNullOrEmpty(request.BankId))
             {
-                var bank = await _context.Banks.FindAsync(vendor.BankId);
+                var bank = await _context.Banks.FindAsync(request.BankId);
                 if (bank == null)
                     return Result.Fail("Bank not found");
             }
 
-            vendor.Id = Guid.NewGuid().ToString();
-            vendor.CreatedAt = _dateService.UtcNow;
-            vendor.UpdatedAt = _dateService.UtcNow;
+            var vendor = new Vendor
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = request.Name,
+                Code = request.Code,
+                AccountName = request.AccountName,
+                AccountNumber = request.AccountNumber,
+                Address = request.Address,
+                PhoneNumber = request.PhoneNumber,
+                Email = request.Email,
+                TaxIdentificationNumber = request.TaxIdentificationNumber,
+                TaxType = request.TaxType,
+                VatRate = request.VatRate,
+                WhtRate = request.WhtRate,
+                BankId = request.BankId,
+                TenantId = request.TenantId,
+                IsActive = true,
+                CreatedAt = _dateService.UtcNow,
+                UpdatedAt = _dateService.UtcNow
+            };
 
             _context.Vendors.Add(vendor);
             await _context.SaveChangesAsync();

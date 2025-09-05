@@ -18,13 +18,7 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, R
 
     public async Task<Result<TenantResponse>> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
-        var tenantResult = await _tenantService.CreateTenantAsync(
-            request.request.Name,
-            request.request.Description,
-            request.request.Address,
-            request.request.PhoneNumber,
-            request.request.Email
-        );
+        var tenantResult = await _tenantService.CreateTenantAsync(request.request);
 
         if (tenantResult.IsFailed)
             return Result.Fail(tenantResult.Errors);

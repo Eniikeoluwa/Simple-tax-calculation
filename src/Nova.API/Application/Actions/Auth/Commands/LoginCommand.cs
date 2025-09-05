@@ -24,7 +24,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         if (!validation.IsValid)
             return Result.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage)));
 
-        var userResult = await _authService.ValidateUserAsync(request.request.Email, request.request.Password);
+        var userResult = await _authService.ValidateUserAsync(request.request);
         if (userResult.IsFailed)
             return Result.Fail(userResult.Errors);
 

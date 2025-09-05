@@ -8,14 +8,14 @@ namespace Nova.API.Application.Services.Data;
 
 public interface IAuthService
 {
-    Task<Result<User>> ValidateUserAsync(string email, string password);
-    Task<Result<User>> CreateUserAsync(string firstName, string lastName, string email, string password, string phoneNumber = "");
+    Task<Result<User>> ValidateUserAsync(LoginRequest request);
+    Task<Result<User>> CreateUserAsync(SignupRequest request);
     Task<Result<RefreshToken>> CreateRefreshTokenAsync(string userId, string token, DateTime expiresAt);
-    Task<Result<RefreshToken>> GetRefreshTokenAsync(string token);
+    Task<Result<RefreshToken>> GetRefreshTokenAsync(RefreshTokenRequest request);
     Task<Result> RevokeRefreshTokenAsync(string token);
-    Task<Result<User>> GetUserByEmailAsync(string email);
+    Task<Result<User>> GetUserByEmailAsync(ForgotPasswordRequest request);
     Task<Result> CreatePasswordResetTokenAsync(string userId, string token, DateTime expiresAt);
-    Task<Result<User>> ValidatePasswordResetTokenAsync(string email, string token);
+    Task<Result<User>> ValidatePasswordResetTokenAsync(ResetPasswordRequest request);
     Task<Result> UpdatePasswordAsync(string userId, string newPassword);
     string HashPassword(string password);
     bool VerifyPassword(string password, string hashedPassword);
@@ -30,17 +30,17 @@ public class AuthService : IAuthService, BaseDataService
         _context = context;
     }
 
-    public async Task<Result<User>> ValidateUserAsync(string email, string password)
+    public async Task<Result<User>> ValidateUserAsync(LoginRequest request)
     {
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
 
         if (user == null)
         {
             return Result.Fail("Invalid email or password");
         }
 
-        if (!VerifyPassword(password, user.PasswordHash))
+        if (!VerifyPassword(request.Password, user.PasswordHash))
         {
             return Result.Fail("Invalid email or password");
         }
@@ -53,10 +53,10 @@ public class AuthService : IAuthService, BaseDataService
         return Result.Ok(user);
     }
 
-    public async Task<Result<User>> CreateUserAsync(string firstName, string lastName, string email, string password, string phoneNumber = "")
+    public async Task<Result<User>> CreateUserAsync(SignupRequest request)
     {
         var existingUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email);
+            .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (existingUser != null)
         {
@@ -66,11 +66,11 @@ public class AuthService : IAuthService, BaseDataService
         var user = new User
         {
             Id = Guid.NewGuid().ToString(),
-            FirstName = firstName,
-            LastName = lastName,
-            Email = email,
-            PhoneNumber = phoneNumber,
-            PasswordHash = HashPassword(password),
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Email = request.Email,
+            PhoneNumber = request.PhoneNumber,
+            PasswordHash = HashPassword(request.Password),
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
@@ -104,11 +104,11 @@ public class AuthService : IAuthService, BaseDataService
         return Result.Ok(refreshToken);
     }
 
-    public async Task<Result<RefreshToken>> GetRefreshTokenAsync(string token)
+    public async Task<Result<RefreshToken>> GetRefreshTokenAsync(RefreshTokenRequest request)
     {
         var refreshToken = await _context.RefreshTokens
             .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.Token == token);
+            .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken);
 
         if (refreshToken == null)
         {
@@ -136,10 +136,10 @@ public class AuthService : IAuthService, BaseDataService
     }
 
 
-    public async Task<Result<User>> GetUserByEmailAsync(string email)
+    public async Task<Result<User>> GetUserByEmailAsync(ForgotPasswordRequest request)
     {
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
 
         if (user == null)
         {
@@ -171,10 +171,10 @@ public class AuthService : IAuthService, BaseDataService
         return Result.Ok();
     }
 
-    public async Task<Result<User>> ValidatePasswordResetTokenAsync(string email, string token)
+    public async Task<Result<User>> ValidatePasswordResetTokenAsync(ResetPasswordRequest request)
     {
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+            .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
 
         if (user == null)
         {
@@ -182,7 +182,7 @@ public class AuthService : IAuthService, BaseDataService
         }
 
         var resetToken = await _context.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.UserId == user.Id && rt.Token == $"RESET_{token}" && rt.RevokedAt == null);
+            .FirstOrDefaultAsync(rt => rt.UserId == user.Id && rt.Token == $"RESET_{request.Token}" && rt.RevokedAt == null);
 
         if (resetToken == null || resetToken.IsExpired)
         {

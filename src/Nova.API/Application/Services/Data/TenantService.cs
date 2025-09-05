@@ -6,13 +6,13 @@ using Nova.Infrastructure;
 
 namespace Nova.API.Application.Services.Data;
 
-public interface IVendorService
+public interface ITenantService
 {
-    Task<Result<Vendor>> CreateVendorAsync(Vendor vendor);
-    Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId);
-    Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
-    Task<Result<bool>> UpdateVendorAsync(Vendor vendor);
-    Task<Result<bool>> DeleteVendorAsync(string vendorId);
+    Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request);
+    Task<Result<Tenant>> GetTenantByIdAsync(string tenantId);
+    Task<Result<List<Tenant>>> GetAllTenantsAsync();
+    Task<Result<bool>> UpdateTenantAsync(Tenant tenant);
+    Task<Result<bool>> DeleteTenantAsync(string tenantId);
 }
 
 public class TenantService : BaseDataService, ITenantService
@@ -21,19 +21,19 @@ public class TenantService : BaseDataService, ITenantService
     {
     }
 
-    public async Task<Result<Tenant>> CreateTenantAsync(string name, string description, string address, string phoneNumber, string email)
+    public async Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request)
     {
         try
         {
             var tenant = new Tenant
             {
                 Id = Guid.NewGuid().ToString(),
-                Name = name,
-                Description = description,
-                Code = GenerateTenantCode(name),
-                Address = address,
-                PhoneNumber = phoneNumber,
-                Email = email,
+                Name = request.Name,
+                Description = request.Description,
+                Code = GenerateTenantCode(request.Name),
+                Address = request.Address,
+                PhoneNumber = request.PhoneNumber,
+                Email = request.Email,
                 IsActive = true,
                 CreatedAt = _dateService.UtcNow,
                 UpdatedAt = _dateService.UtcNow

@@ -20,7 +20,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 
     public async Task<Result> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
-        var userResult = await _authService.GetUserByEmailAsync(request.request.Email);
+        var userResult = await _authService.GetUserByEmailAsync(request.request);
         if (userResult.IsFailed)
             return Result.Fail(userResult.Errors);
 
