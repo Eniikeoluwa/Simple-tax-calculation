@@ -42,6 +42,16 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasMany(e => e.TenantUsers)
+            .WithOne(tu => tu.User)
+            .HasForeignKey(tu => tu.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(e => e.TenantUsers)
+            .WithOne(tu => tu.User)
+            .HasForeignKey(tu => tu.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Indexes
         builder.HasIndex(e => e.Email)
             .IsUnique();
