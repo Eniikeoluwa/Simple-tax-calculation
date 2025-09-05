@@ -14,11 +14,16 @@ public static class ServiceCollectionExtensions
         // Add MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-        // Add custom services
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<ITokenService, TokenService>();
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddScoped<IDateService, DateService>();
+    // Add custom services
+    services.AddScoped<IAuthService, AuthService>();
+    services.AddScoped<ITokenService, TokenService>();
+    services.AddScoped<ITenantService, TenantService>();
+    services.AddScoped<IVendorService, VendorService>();
+    services.AddScoped<ICurrentUserService, CurrentUserService>();
+    services.AddScoped<IDateService, DateService>();
+
+    // FluentValidation validators
+    services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
         return services;
     }
