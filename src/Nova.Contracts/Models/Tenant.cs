@@ -21,3 +21,8 @@ public class TenantResponse
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+public class GetTenantsResponse
+{
+    public List<TenantResponse> Tenants { get; set; } = new();
+}
