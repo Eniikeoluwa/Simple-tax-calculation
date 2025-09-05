@@ -11,22 +11,39 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.ConfigureBase();
         builder.ToTable("Users");
 
-        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Email)
+            .HasMaxLength(256)
+            .IsRequired();
 
-        builder.Property(e => e.Id).HasMaxLength(50);
+        builder.Property(e => e.FirstName)
+            .HasMaxLength(100)
+            .IsRequired();
 
-        builder.Property(e => e.Email).HasMaxLength(100).IsRequired();
+        builder.Property(e => e.LastName)
+            .HasMaxLength(100)
+            .IsRequired();
 
-        builder.Property(e => e.FirstName).HasMaxLength(100).IsRequired();
+        builder.Property(e => e.PasswordHash)
+            .HasMaxLength(500)
+            .IsRequired();
 
-        builder.Property(e => e.LastName).HasMaxLength(100).IsRequired();
+        builder.Property(e => e.PhoneNumber)
+            .HasMaxLength(25);
 
-        builder.Property(e => e.Password).HasMaxLength(100).IsRequired();
+        builder.Property(e => e.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true);
 
-        builder.Property(e => e.PhoneNumber).HasMaxLength(25).IsRequired();
+        builder.Property(e => e.LastLoginAt);
 
-        builder.Property(e => e.CurrentTenantId).HasMaxLength(50);
+        // Relationships
+        builder.HasMany(e => e.RefreshTokens)
+            .WithOne(rt => rt.User)
+            .HasForeignKey(rt => rt.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(e => e.TenantUsers).WithOne(tu => tu.User).HasForeignKey(tu => tu.UserId);
+        // Indexes
+        builder.HasIndex(e => e.Email)
+            .IsUnique();
     }
 }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/macbook/novastart/src/NOVA.API/Nova.API.csproj": {}
+    "/Users/macbook/novastart/src/Nova.API/Nova.API.csproj": {}
   },
   "projects": {
-    "/Users/macbook/novastart/src/NOVA.API/Nova.API.csproj": {
+    "/Users/macbook/novastart/src/Nova.API/Nova.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/macbook/novastart/src/NOVA.API/Nova.API.csproj",
+        "projectUniqueName": "/Users/macbook/novastart/src/Nova.API/Nova.API.csproj",
         "projectName": "Nova.API",
-        "projectPath": "/Users/macbook/novastart/src/NOVA.API/Nova.API.csproj",
+        "projectPath": "/Users/macbook/novastart/src/Nova.API/Nova.API.csproj",
         "packagesPath": "/Users/macbook/.nuget/packages/",
-        "outputPath": "/Users/macbook/novastart/src/NOVA.API/obj/",
+        "outputPath": "/Users/macbook/novastart/src/Nova.API/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/macbook/.nuget/NuGet/NuGet.Config"
@@ -54,6 +54,18 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "FluentResults": {
+              "target": "Package",
+              "version": "[4.0.0, )"
+            },
+            "MediatR": {
+              "target": "Package",
+              "version": "[13.0.0, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[9.0.2, )"

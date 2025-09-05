@@ -1,0 +1,77 @@
+using FluentResults;
+using MediatR;
+using Nova.API.Application.Services.Common;
+using Nova.API.Application.Services.Data;
+using Nova.Contracts.Auth;
+using FluentValidation;
+
+namespace Nova.API.Application.Actions.Auth;
+
+public class LoginCommand : IRequest<Result<AuthResponse>>
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}
+
+public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
+{
+    private readonly IAuthService _authService;
+    private readonly ITokenService _tokenService;
+
+    public LoginCommandHandler(IAuthService authService, ITokenService tokenService)
+    {
+        _authService = authService;
+        _tokenService = tokenService;
+    }
+
+    public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    {
+        var validator = new LoginCommandValidator();
+        var validation = validator.Validate(request);
+        if (!validation.IsValid)
+            return Result.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage)));
+
+        var userResult = await _authService.ValidateUserAsync(request.Email, request.Password);
+        if (userResult.IsFailed)
+            return Result.Fail(userResult.Errors);
+
+        var user = userResult.Value;
+
+    var accessToken = _tokenService.GenerateAccessToken(user);
+    var refreshToken = _tokenService.GenerateRefreshToken();
+    var refreshTokenExpiry = _tokenService.GetRefreshTokenExpiryDate();
+
+        var refreshTokenResult = await _authService.CreateRefreshTokenAsync(user.Id, refreshToken, refreshTokenExpiry);
+        if (refreshTokenResult.IsFailed)
+            return Result.Fail(refreshTokenResult.Errors);
+
+        return Result.Ok(new AuthResponse
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            UserId = user.Id,
+            Email = user.Email,
+            FullName = user.FullName,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            TenantId = user.TenantId
+        });
+    }
+}
+
+// Validator (inlined)
+public class LoginCommandValidator : FluentValidation.AbstractValidator<LoginCommand>
+{
+    public LoginCommandValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().WithMessage("Email is required.").EmailAddress().WithMessage("Invalid email format.");
+        RuleFor(x => x.Password).NotEmpty().WithMessage("Password is required.");
+    }
+}
+public class LoginCommandValidator : AbstractValidator<LoginCommand>
+{
+    public LoginCommandValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().WithMessage("Email is required.").EmailAddress().WithMessage("Invalid email format.");
+        RuleFor(x => x.Password).NotEmpty().WithMessage("Password is required.");
+    }
+}
