@@ -16,16 +16,16 @@ public class CreateTenantCommand : IRequest<Result<TenantResponse>>
 
 public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, Result<TenantResponse>>
 {
-    private readonly IAuthService _authService;
+    private readonly ITenantService _tenantService;
 
-    public CreateTenantCommandHandler(IAuthService authService)
+    public CreateTenantCommandHandler(ITenantService tenantService)
     {
-        _authService = authService;
+        _tenantService = tenantService;
     }
 
     public async Task<Result<TenantResponse>> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
-    var tenantResult = await _authService.CreateTenantAsync(
+        var tenantResult = await _tenantService.CreateTenantAsync(
             request.Name,
             request.Description,
             request.Address,
@@ -36,9 +36,9 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, R
         if (tenantResult.IsFailed)
             return Result.Fail(tenantResult.Errors);
 
-    var tenant = tenantResult.Value;
+        var tenant = tenantResult.Value;
 
-    return Result.Ok(new TenantResponse
+        return Result.Ok(new TenantResponse
         {
             Id = tenant.Id,
             Name = tenant.Name,
