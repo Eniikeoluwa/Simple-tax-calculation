@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nova.API.Application.Actions.Vendor;
 using Nova.API.Controllers;
@@ -14,7 +13,7 @@ namespace Nova.API.Controllers;
 public class VendorController : BaseController
 {
     [HttpPost("create")]
-    public async Task<IActionResult> CreateVendor(
+    public async Task<ActionResult<VendorResponse>> CreateVendor(
         [FromServices] IFeatureAction<CreateVendorCommand, VendorResponse> action,
         [FromBody] CreateVendorRequest request)
     {
@@ -31,3 +30,4 @@ public class VendorController : BaseController
     //     return await SendAction(action, query);
     // }
 }
+

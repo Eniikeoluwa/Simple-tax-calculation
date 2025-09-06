@@ -37,7 +37,7 @@ public class AuthController : BaseController
     }
 
     [HttpPost("forgot-password")]
-    public async Task<ActionResult> ForgotPassword([
+    public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([
         FromServices] IFeatureAction<ForgotPasswordCommand, ForgotPasswordResponse> action,
         [FromBody] ForgotPasswordRequest request)
     {
@@ -46,7 +46,7 @@ public class AuthController : BaseController
     }
 
     [HttpPost("reset-password")]
-    public async Task<ActionResult> ResetPassword([
+    public async Task<ActionResult<ResetPasswordResponse>> ResetPassword([
         FromServices] IFeatureAction<ResetPasswordCommand, ResetPasswordResponse> action,
         [FromBody] ResetPasswordRequest request)
     {
