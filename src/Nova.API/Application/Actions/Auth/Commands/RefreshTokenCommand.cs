@@ -4,7 +4,7 @@ using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using FluentValidation;
 
-namespace Nova.API.Application.Actions.Auth;
+namespace Nova.API.Application.Actions.Auth.Commands;
 
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<TokenResponse>>
 {

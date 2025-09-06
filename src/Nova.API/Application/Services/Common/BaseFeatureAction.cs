@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nova.API.Application.Common
+namespace Nova.API.Application.Services.Common
 {
     public interface IRequest<TResponse>
     {
