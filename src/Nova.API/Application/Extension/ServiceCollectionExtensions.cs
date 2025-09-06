@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Nova.API.Application.Services.Common;
 using Nova.API.Application.Services.Data;
+using FluentValidation;
 
 namespace Nova.API.Extensions;
 

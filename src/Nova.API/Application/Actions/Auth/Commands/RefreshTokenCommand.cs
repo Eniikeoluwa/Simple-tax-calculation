@@ -24,7 +24,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, T
         if (!validation.IsValid)
             return Result.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage)));
 
-        var existingRtResult = await _authService.GetRefreshTokenAsync(request.request.RefreshToken);
+    var existingRtResult = await _authService.GetRefreshTokenAsync(request.request);
         if (existingRtResult.IsFailed)
             return Result.Fail(existingRtResult.Errors);
 

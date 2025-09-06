@@ -24,9 +24,9 @@ public interface IAuthService
 
 public class AuthService : BaseDataService, IAuthService
 {
-    private readonly AppDbContext _context;
+    private readonly new AppDbContext _context;
 
-    public AuthService(AppDbContext context)
+    public AuthService(AppDbContext context) : base(context)
     {
         _context = context;
     }
@@ -204,7 +204,7 @@ public class AuthService : BaseDataService, IAuthService
             return Result.Fail("User not found");
         }
 
-        user.PasswordHash = HashPassword(newPassword);
+    user.PasswordHash = await HashPassword(newPassword);
         user.UpdatedAt = DateTime.UtcNow;
 
         // Revoke all refresh tokens and reset tokens for this user

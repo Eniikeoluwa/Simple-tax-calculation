@@ -9,6 +9,14 @@ namespace Nova.API.Controllers
     [ApiController]
     public abstract class BaseController : ControllerBase
     {
+        protected IActionResult HandleResult<T>(Result<T> result)
+        {
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            return BadRequest(result.Errors.Select(e => e.Message));
+        }
         private static async Task<Result<TResponse>> Send<TRequest, TResponse>(
             IFeatureAction<TRequest, TResponse> action, TRequest request,
             CancellationToken cancellationToken) where TRequest : IRequest<TResponse>
@@ -48,23 +56,6 @@ namespace Nova.API.Controllers
             }
         }
 
-        protected IActionResult HandleResult<TResponse>(Result<TResponse> result)
-        {
-            if (result.IsFailed)
-                return Problem(result.Errors);
-
-            if (result.Value is MediaDownloadResult media)
-            {
-                var stream = media.Stream ?? System.IO.Stream.Null;
-                var contentType = media.ContentType ?? "application/octet-stream";
-                return File(stream, contentType, media.FileName);
-            }
-
-            if (result.Value is BaseResponse baseResponse)
-                return Ok(baseResponse);
-
-            return Ok(BaseResponse.CreateSuccess(result.Value));
-        }
 
         protected IActionResult Problem(List<IError> errors)
         {

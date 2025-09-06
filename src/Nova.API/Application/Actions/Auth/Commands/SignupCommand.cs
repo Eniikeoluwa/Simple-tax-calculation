@@ -19,7 +19,20 @@ namespace Nova.API.Application.Actions.Auth.Commands
 
         public async Task<Result<AuthResponse>> Handle(SignupCommand command, CancellationToken cancellationToken)
         {
-            return await _authService.CreateUserAsync(command.request);
+            var userResult = await _authService.CreateUserAsync(command.request);
+            if (userResult.IsFailed)
+                return Result.Fail(userResult.Errors);
+
+            var user = userResult.Value;
+            var response = new AuthResponse
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                FullName = user.FullName,
+                TenantId = user.TenantId,
+                // Add other fields as needed
+            };
+            return Result.Ok(response);
         }
     }
 

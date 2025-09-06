@@ -1,6 +1,6 @@
 using FluentResults;
 
-namespace NOVA.Domain.Utils
+namespace Nova.Domain.Utils
 {
     public class AppError : Error
     {
