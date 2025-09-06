@@ -18,7 +18,7 @@ public interface IVendorService
 
 public class VendorService : BaseDataService, IVendorService
 {
-    public VendorService(AppDbContext context, IDateService dateService) : base(context, dateService)
+    public VendorService(AppDbContext context) : base(context)
     {
     }
 
@@ -63,8 +63,8 @@ public class VendorService : BaseDataService, IVendorService
                 BankId = request.BankId,
                 TenantId = request.TenantId,
                 IsActive = true,
-                CreatedAt = _dateService.UtcNow,
-                UpdatedAt = _dateService.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.Vendors.Add(vendor);
@@ -139,7 +139,7 @@ public class VendorService : BaseDataService, IVendorService
             existingVendor.WhtRate = vendor.WhtRate;
             existingVendor.BankId = vendor.BankId;
             existingVendor.IsActive = vendor.IsActive;
-            existingVendor.UpdatedAt = _dateService.UtcNow;
+            existingVendor.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);
@@ -159,7 +159,7 @@ public class VendorService : BaseDataService, IVendorService
                 return Result.Fail("Vendor not found");
 
             vendor.IsActive = false;
-            vendor.UpdatedAt = _dateService.UtcNow;
+            vendor.UpdatedAt = DateTime.UtcNow;
             
             _context.Vendors.Update(vendor);
             await _context.SaveChangesAsync();

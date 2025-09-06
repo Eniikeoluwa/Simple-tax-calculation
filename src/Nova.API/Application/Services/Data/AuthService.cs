@@ -41,7 +41,8 @@ public class AuthService : BaseDataService, IAuthService
             return Result.Fail("Invalid email or password");
         }
 
-        if (!VerifyPassword(request.Password, user.PasswordHash))
+        var passwordValid = await VerifyPassword(request.Password, user.PasswordHash);
+        if (!passwordValid)
         {
             return Result.Fail("Invalid email or password");
         }
@@ -71,7 +72,7 @@ public class AuthService : BaseDataService, IAuthService
             LastName = request.LastName,
             Email = request.Email,
             PhoneNumber = request.PhoneNumber,
-            PasswordHash = HashPassword(request.Password),
+                PasswordHash = await HashPassword(request.Password),
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
@@ -221,14 +222,16 @@ public class AuthService : BaseDataService, IAuthService
         return Result.Ok();
     }
 
-    public string HashPassword(string password)
+    public async Task<string> HashPassword(string password)
     {
-        return BCrypt.Net.BCrypt.HashPassword(password, BCrypt.Net.BCrypt.GenerateSalt(12));
+        // Simulate async, or use Task.Run for CPU-bound
+        return await Task.Run(() => BCrypt.Net.BCrypt.HashPassword(password));
     }
 
-    public bool VerifyPassword(string password, string hashedPassword)
+    public async Task<bool> VerifyPassword(string password, string hashedPassword)
     {
-        return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        // Simulate async, or use Task.Run for CPU-bound
+        return await Task.Run(() => BCrypt.Net.BCrypt.Verify(password, hashedPassword));
     }
 
     private static string GenerateTenantCode(string name)

@@ -6,7 +6,6 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public record ResetPasswordCommand(ResetPasswordRequest request) : IRequest<ResetPasswordResponse>;
 
 public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, ResetPasswordResponse>
 {
@@ -17,7 +16,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         _authService = authService;
     }
 
-    public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ResetPasswordResponse>> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
         var validateResult = await _authService.ValidatePasswordResetTokenAsync(request.request);
         if (validateResult.IsFailed)
@@ -28,9 +27,11 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         if (updateResult.IsFailed)
             return Result.Fail(updateResult.Errors);
 
-        return Result.Ok();
+        // Return a response DTO for success
+        return Result.Ok(new ResetPasswordResponse { Success = true, Email = user.Email });
     }
 }
+public record ResetPasswordCommand(ResetPasswordRequest request) : IRequest<ResetPasswordResponse>;
 
 public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
 {

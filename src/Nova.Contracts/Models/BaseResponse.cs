@@ -1,5 +1,5 @@
 
-namespace NOVA.Contracts.Models;
+namespace Nova.Contracts.Models;
 
 public record BaseResponse(bool Success)
 {

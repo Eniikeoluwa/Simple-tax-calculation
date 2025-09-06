@@ -7,7 +7,7 @@ using Nova.Domain.Entities;
 
 namespace Nova.API.Application.Actions.Vendor;
 
-public record CreateVendorCommand(CreateVendorRequest request) : IRequest<Result<VendorResponse>>;
+public record CreateVendorCommand(CreateVendorRequest request) : IRequest<VendorResponse>;
 
 public class CreateVendorCommandValidator : AbstractValidator<CreateVendorCommand>
 {
@@ -58,7 +58,7 @@ public class CreateVendorCommandValidator : AbstractValidator<CreateVendorComman
     }
 }
 
-public class CreateVendorCommandHandler : IRequestHandler<CreateVendorCommand, Result<VendorResponse>>
+public class CreateVendorCommandHandler : IRequestHandler<CreateVendorCommand, VendorResponse>
 {
     private readonly IVendorService _vendorService;
 

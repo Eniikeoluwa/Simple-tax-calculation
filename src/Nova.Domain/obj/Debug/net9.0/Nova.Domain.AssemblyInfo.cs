@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Nova.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2d376ca6a257050442d50160c13e2038fbb164e4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+955013846d9b5c915d03ed6c46dc1bd72ca2c842")]
 [assembly: System.Reflection.AssemblyProductAttribute("Nova.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Nova.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

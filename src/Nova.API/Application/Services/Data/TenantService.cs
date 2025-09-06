@@ -18,7 +18,7 @@ public interface ITenantService
 
 public class TenantService : BaseDataService, ITenantService
 {
-    public TenantService(AppDbContext context, IDateService dateService) : base(context, dateService)
+    public TenantService(AppDbContext context) : base(context)
     {
     }
 
@@ -36,8 +36,8 @@ public class TenantService : BaseDataService, ITenantService
                 PhoneNumber = request.PhoneNumber,
                 Email = request.Email,
                 IsActive = true,
-                CreatedAt = _dateService.UtcNow,
-                UpdatedAt = _dateService.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.Tenants.Add(tenant);
@@ -103,7 +103,7 @@ public class TenantService : BaseDataService, ITenantService
             existingTenant.PhoneNumber = tenant.PhoneNumber;
             existingTenant.Email = tenant.Email;
             existingTenant.IsActive = tenant.IsActive;
-            existingTenant.UpdatedAt = _dateService.UtcNow;
+            existingTenant.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);
@@ -123,7 +123,7 @@ public class TenantService : BaseDataService, ITenantService
                 return Result.Fail("Tenant not found");
 
             tenant.IsActive = false;
-            tenant.UpdatedAt = _dateService.UtcNow;
+            tenant.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);

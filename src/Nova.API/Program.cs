@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Nova.API.Extensions;
 using Nova.Infrastructure;
+using Microsoft.OpenApi.Models;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 

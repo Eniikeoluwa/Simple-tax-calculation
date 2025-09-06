@@ -18,7 +18,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         _tokenService = tokenService;
     }
 
-    public async Task<Result> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ForgotPasswordResponse>> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
         var userResult = await _authService.GetUserByEmailAsync(request.request);
         if (userResult.IsFailed)
@@ -38,7 +38,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     }
 }
 
-public record ForgotPasswordCommand(ForgotPasswordRequest request) : IRequest<Result>;
+public record ForgotPasswordCommand(ForgotPasswordRequest request) : IRequest<ForgotPasswordResponse>;
 
     public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCommand>
     {

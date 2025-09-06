@@ -55,7 +55,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, T
         });
     }
 }
-public record RefreshTokenCommand(RefreshTokenRequest request) : IRequest<Result<TokenResponse>>;
+public record RefreshTokenCommand(RefreshTokenRequest request) : IRequest<TokenResponse>;
 
     public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
     {

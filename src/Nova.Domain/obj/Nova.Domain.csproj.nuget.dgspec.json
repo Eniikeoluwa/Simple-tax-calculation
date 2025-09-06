@@ -44,7 +44,15 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "FluentResults": {
+              "target": "Package",
+              "version": "[4.0.0, )"
+            },
             "FluentValidation": {
+              "target": "Package",
+              "version": "[12.0.0, )"
+            },
+            "FluentValidation.DependencyInjectionExtensions": {
               "target": "Package",
               "version": "[12.0.0, )"
             },
