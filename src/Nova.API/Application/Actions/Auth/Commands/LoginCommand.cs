@@ -1,10 +1,10 @@
 using FluentResults;
-using Nova.API.Application.Common;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using FluentValidation;
+using Nova.API.Application.Services.Common;
 
-namespace Nova.API.Application.Actions.Auth;
+namespace Nova.API.Application.Actions.Auth.Commands;
 
 public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
 {

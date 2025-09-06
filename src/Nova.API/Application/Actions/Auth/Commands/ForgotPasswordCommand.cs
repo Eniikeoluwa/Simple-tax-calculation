@@ -5,7 +5,7 @@ using FluentValidation;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 
-namespace Nova.API.Application.Actions.Auth;
+namespace Nova.API.Application.Actions.Auth.Commands;
 
 public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, Result>
 {
