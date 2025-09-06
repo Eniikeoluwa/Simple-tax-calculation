@@ -8,7 +8,7 @@ namespace Nova.API.Application.Actions.Auth.Commands;
 
 public record ResetPasswordCommand(ResetPasswordRequest request) : IRequest<Result>;
 
-public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Result>
+public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, ResetPasswordResponse>
 {
     private readonly IAuthService _authService;
 

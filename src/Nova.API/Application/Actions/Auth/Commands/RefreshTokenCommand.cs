@@ -6,7 +6,7 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<TokenResponse>>
+public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, TokenResponse>
 {
     private readonly IAuthService _authService;
     private readonly ITokenService _tokenService;

@@ -7,7 +7,7 @@ using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, Result>
+public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, ForgotPasswordResponse>
 {
     private readonly IAuthService _authService;
     private readonly ITokenService _tokenService;
