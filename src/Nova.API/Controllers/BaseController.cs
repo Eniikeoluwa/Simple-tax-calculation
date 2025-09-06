@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Nova.API.Application.Common;
+using Nova.API.Application.Services.Common;
 using Nova.Contracts.Models;
 using Nova.Domain.Utils;
 using FluentResults;

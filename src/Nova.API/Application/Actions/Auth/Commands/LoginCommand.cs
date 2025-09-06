@@ -1,5 +1,5 @@
 using FluentResults;
-using Nova.API.Application.Services.Data;
+using Nova.API.Application.Services.Common;
 using Nova.Contracts.Models;
 using FluentValidation;
 using Nova.API.Application.Services.Common;

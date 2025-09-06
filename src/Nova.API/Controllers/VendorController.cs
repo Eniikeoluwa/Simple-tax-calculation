@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nova.API.Application.Actions.Vendor;
 using Nova.API.Controllers;
-using Nova.API.Application.Common;
+using Nova.API.Application.Services.Common;
 using Nova.Contracts.Models;
 
 namespace Nova.API.Controllers;

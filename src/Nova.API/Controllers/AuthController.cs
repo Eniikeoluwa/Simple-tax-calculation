@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nova.API.Application.Common;
 using Nova.API.Application.Actions.Auth.Commands;
 using Nova.Contracts.Models;
+using Nova.API.Application.Services.Common;
 
 namespace Nova.API.Controllers;
 
