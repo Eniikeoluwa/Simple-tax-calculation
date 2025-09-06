@@ -6,7 +6,7 @@ using Nova.API.Application.Services.Common;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
+public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
 {
     private readonly IAuthService _authService;
     private readonly ITokenService _tokenService;
@@ -50,7 +50,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         });
     }
 }
-public record LoginCommand(LoginRequest request) : IRequest<Result<AuthResponse>>;
+public record LoginCommand(LoginRequest request) : IRequest<AuthResponse>;
     public class LoginCommandValidator : AbstractValidator<LoginCommand>
     {
         public LoginCommandValidator()

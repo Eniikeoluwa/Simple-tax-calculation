@@ -5,9 +5,9 @@ using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Tenant;
 
-public record CreateTenantCommand(CreateTenantRequest request) : IRequest<Result<TenantResponse>>;
+public record CreateTenantCommand(CreateTenantRequest request) : IRequest<TenantResponse>;
 
-public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, Result<TenantResponse>>
+public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, TenantResponse>
 {
     private readonly ITenantService _tenantService;
 

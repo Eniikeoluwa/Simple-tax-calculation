@@ -10,8 +10,8 @@ namespace Nova.API.Application.Services.Data;
 public interface IVendorService
 {
     Task<Result<Vendor>> CreateVendorAsync(CreateVendorRequest request);
-    Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId);
-    Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
+    // Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId);
+    // Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
     Task<Result<bool>> UpdateVendorAsync(Vendor vendor);
     Task<Result<bool>> DeleteVendorAsync(string vendorId);
 }
@@ -78,44 +78,44 @@ public class VendorService : BaseDataService, IVendorService
         }
     }
 
-    public async Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId)
-    {
-        try
-        {
-            var vendors = await _context.Vendors
-                .Include(v => v.Bank)
-                .Include(v => v.Tenant)
-                .Where(v => v.TenantId == tenantId && v.IsActive)
-                .OrderBy(v => v.Name)
-                .ToListAsync();
+    // public async Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId)
+    // {
+    //     try
+    //     {
+    //         var vendors = await _context.Vendors
+    //             .Include(v => v.Bank)
+    //             .Include(v => v.Tenant)
+    //             .Where(v => v.TenantId == tenantId && v.IsActive)
+    //             .OrderBy(v => v.Name)
+    //             .ToListAsync();
 
-            return Result.Ok(vendors);
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to get vendors: {ex.Message}");
-        }
-    }
+    //         return Result.Ok(vendors);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return Result.Fail($"Failed to get vendors: {ex.Message}");
+    //     }
+    // }
 
-    public async Task<Result<Vendor>> GetVendorByIdAsync(string vendorId)
-    {
-        try
-        {
-            var vendor = await _context.Vendors
-                .Include(v => v.Bank)
-                .Include(v => v.Tenant)
-                .FirstOrDefaultAsync(v => v.Id == vendorId);
+    // public async Task<Result<Vendor>> GetVendorByIdAsync(string vendorId)
+    // {
+    //     try
+    //     {
+    //         var vendor = await _context.Vendors
+    //             .Include(v => v.Bank)
+    //             .Include(v => v.Tenant)
+    //             .FirstOrDefaultAsync(v => v.Id == vendorId);
 
-            if (vendor == null)
-                return Result.Fail("Vendor not found");
+    //         if (vendor == null)
+    //             return Result.Fail("Vendor not found");
 
-            return Result.Ok(vendor);
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to get vendor: {ex.Message}");
-        }
-    }
+    //         return Result.Ok(vendor);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return Result.Fail($"Failed to get vendor: {ex.Message}");
+    //     }
+    // }
 
     public async Task<Result<bool>> UpdateVendorAsync(Vendor vendor)
     {

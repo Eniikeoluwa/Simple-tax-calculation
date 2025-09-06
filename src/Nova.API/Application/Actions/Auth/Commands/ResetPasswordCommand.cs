@@ -6,7 +6,7 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public record ResetPasswordCommand(ResetPasswordRequest request) : IRequest<Result>;
+public record ResetPasswordCommand(ResetPasswordRequest request) : IRequest<ResetPasswordResponse>;
 
 public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, ResetPasswordResponse>
 {

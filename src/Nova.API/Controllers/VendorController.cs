@@ -22,12 +22,12 @@ public class VendorController : BaseController
         return await SendAction(action, command);
     }
 
-    [HttpGet("tenant/{tenantId}")]
-    public async Task<IActionResult> GetVendorsByTenant(
-        [FromServices] IFeatureAction<GetVendorsQuery, GetVendorsResponse> action,
-        string tenantId)
-    {
-        var query = new GetVendorsQuery { TenantId = tenantId };
-        return await SendAction(action, query);
-    }
+    // [HttpGet("tenant/{tenantId}")]
+    // public async Task<IActionResult> GetVendorsByTenant(
+    //     [FromServices] IFeatureAction<GetVendorsQuery, GetVendorsResponse> action,
+    //     string tenantId)
+    // {
+    //     var query = new GetVendorsQuery { TenantId = tenantId };
+    //     return await SendAction(action, query);
+    // }
 }

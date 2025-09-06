@@ -22,7 +22,7 @@ public interface IAuthService
     Task<bool> VerifyPassword(string password, string hashedPassword);
 }
 
-public class AuthService : IAuthService, BaseDataService
+public class AuthService : BaseDataService, IAuthService
 {
     private readonly AppDbContext _context;
 
