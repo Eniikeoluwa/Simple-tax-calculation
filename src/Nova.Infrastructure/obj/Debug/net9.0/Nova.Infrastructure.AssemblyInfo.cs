@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Nova.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6d3b7c014de9e5afdcefc677114dca7a5c134011")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f738bc3ba90e649dae8b58407e603b90d2de36d5")]
 [assembly: System.Reflection.AssemblyProductAttribute("Nova.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Nova.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
