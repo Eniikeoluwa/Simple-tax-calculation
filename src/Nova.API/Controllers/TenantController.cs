@@ -14,7 +14,7 @@ public class TenantController : BaseController
 {
     [HttpPost]
     public async Task<ActionResult<TenantResponse>> CreateTenant([
-        FromServices] IFeatureAction<CreateTenantCommand, Result<TenantResponse>> action,
+        FromServices] IFeatureAction<CreateTenantCommand, TenantResponse> action,
         [FromBody] CreateTenantRequest request)
     {
         // Ensure user is authenticated and is an admin

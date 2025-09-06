@@ -20,7 +20,7 @@ public class AuthController : BaseController
 
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login([
-        FromServices] IFeatureAction<LoginCommand, Result<AuthResponse>> action,
+        FromServices] IFeatureAction<LoginCommand, AuthResponse> action,
         [FromBody] LoginRequest request)
     {
         var command = new LoginCommand(request);
@@ -29,7 +29,7 @@ public class AuthController : BaseController
 
     [HttpPost("refresh")]
     public async Task<ActionResult<TokenResponse>> RefreshToken([
-        FromServices] IFeatureAction<RefreshTokenCommand, Result<TokenResponse>> action,
+        FromServices] IFeatureAction<RefreshTokenCommand, TokenResponse> action,
         [FromBody] RefreshTokenRequest request)
     {
         var command = new RefreshTokenCommand(request);
