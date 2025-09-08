@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nova.API.Application.Actions.Tenant;
 using Nova.API.Extensions;
-using Nova.API.Application.Services.Common;
 using Nova.Contracts.Models;
+using MediatR;
 
 namespace Nova.API.Controllers;
 
@@ -12,10 +12,12 @@ namespace Nova.API.Controllers;
 [Authorize]
 public class TenantController : BaseController
 {
+    public TenantController(IMediator mediator) : base(mediator)
+    {
+    }
+
     [HttpPost]
-    public async Task<ActionResult<TenantResponse>> CreateTenant([
-        FromServices] IFeatureAction<CreateTenantCommand, TenantResponse> action,
-        [FromBody] CreateTenantRequest request)
+    public async Task<ActionResult<TenantResponse>> CreateTenant([FromBody] CreateTenantRequest request)
     {
         // Ensure user is authenticated and is an admin
         var userId = User.GetUserId();
@@ -25,6 +27,6 @@ public class TenantController : BaseController
         }
 
         var command = new CreateTenantCommand(request);
-        return await SendAction(action, command);
+        return await SendCommand<CreateTenantCommand, TenantResponse>(command);
     }
 }

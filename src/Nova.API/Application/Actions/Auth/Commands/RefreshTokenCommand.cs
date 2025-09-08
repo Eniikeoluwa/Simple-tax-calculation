@@ -1,12 +1,13 @@
 using FluentResults;
 using Nova.API.Application.Services.Common;
+using MediatR;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, TokenResponse>
+public class RefreshTokenCommandHandler : MediatR.IRequestHandler<RefreshTokenCommand, Result<TokenResponse>>
 {
     private readonly IAuthService _authService;
     private readonly ITokenService _tokenService;
@@ -55,7 +56,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, T
         });
     }
 }
-public record RefreshTokenCommand(RefreshTokenRequest request) : IRequest<TokenResponse>;
+public record RefreshTokenCommand(RefreshTokenRequest request) : MediatR.IRequest<Result<TokenResponse>>;
 
     public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
     {

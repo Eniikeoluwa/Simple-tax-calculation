@@ -1,13 +1,14 @@
 using FluentResults;
 using Nova.API.Application.Services.Common;
+using MediatR;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Tenant;
 
-public record CreateTenantCommand(CreateTenantRequest request) : IRequest<TenantResponse>;
+public record CreateTenantCommand(CreateTenantRequest request) : MediatR.IRequest<Result<TenantResponse>>;
 
-public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, TenantResponse>
+public class CreateTenantCommandHandler : MediatR.IRequestHandler<CreateTenantCommand, Result<TenantResponse>>
 {
     private readonly ITenantService _tenantService;
 

@@ -1,13 +1,14 @@
 using FluentResults;
 using FluentValidation;
 using Nova.API.Application.Services.Common;
+using MediatR;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using Nova.Domain.Entities;
 
 namespace Nova.API.Application.Actions.Vendor;
 
-public record CreateVendorCommand(CreateVendorRequest request) : IRequest<VendorResponse>;
+public record CreateVendorCommand(CreateVendorRequest request) : MediatR.IRequest<Result<VendorResponse>>;
 
 public class CreateVendorCommandValidator : AbstractValidator<CreateVendorCommand>
 {
@@ -58,7 +59,7 @@ public class CreateVendorCommandValidator : AbstractValidator<CreateVendorComman
     }
 }
 
-public class CreateVendorCommandHandler : IRequestHandler<CreateVendorCommand, VendorResponse>
+public class CreateVendorCommandHandler : MediatR.IRequestHandler<CreateVendorCommand, Result<VendorResponse>>
 {
     private readonly IVendorService _vendorService;
 

@@ -4,6 +4,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Nova.API.Application.Services.Common;
 using Nova.API.Application.Services.Data;
+using Nova.API.Application.Actions.Auth.Commands;
+using Nova.API.Application.Actions.Tenant;
+using Nova.API.Application.Actions.Vendor;
+using Nova.Contracts.Models;
 using FluentValidation;
 
 namespace Nova.API.Extensions;
@@ -13,7 +17,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Add MediatR
-        // services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+    // Register MediatR handlers
+    services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         // Register IHttpContextAccessor (required by CurrentUserService and for design-time activation)
         services.AddHttpContextAccessor();
 

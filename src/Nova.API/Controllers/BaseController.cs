@@ -1,15 +1,78 @@
 using Microsoft.AspNetCore.Mvc;
-using Nova.API.Application.Services.Common;
 using Nova.Contracts.Models;
 using Nova.Domain.Utils;
 using FluentResults;
+using MediatR;
 
 namespace Nova.API.Controllers
 {
     [ApiController]
     public abstract class BaseController : ControllerBase
     {
-        protected IActionResult HandleResult<T>(Result<T> result)
+        private readonly IMediator _mediator;
+
+        protected BaseController(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
+
+        // For commands without return values
+        protected async Task<IActionResult> SendCommand<TRequest>(TRequest request)
+            where TRequest : IRequest<Result<Unit>>
+        {
+            try
+            {
+                var result = await _mediator.Send(request, HttpContext.RequestAborted);
+                return HandleResult(result);
+            }
+            catch (Exception ex)
+            {
+                return await HandleException(ex);
+            }
+        }
+
+        // For commands with return values
+        protected async Task<ActionResult<TResponse>> SendCommand<TRequest, TResponse>(TRequest request)
+            where TRequest : IRequest<Result<TResponse>>
+        {
+            try
+            {
+                var result = await _mediator.Send(request, HttpContext.RequestAborted);
+                if (result.IsSuccess)
+                {
+                    return Ok(result.Value);
+                }
+                
+                return await HandleErrors<TResponse>(result.Errors);
+            }
+            catch (Exception ex)
+            {
+                return await HandleException<TResponse>(ex);
+            }
+        }
+
+        // For queries
+        protected async Task<ActionResult<TResponse>> SendQuery<TRequest, TResponse>(TRequest request)
+            where TRequest : IRequest<Result<TResponse>>
+        {
+            try
+            {
+                var result = await _mediator.Send(request, HttpContext.RequestAborted);
+                if (result.IsSuccess)
+                {
+                    return Ok(result.Value);
+                }
+                
+                return await HandleErrors<TResponse>(result.Errors);
+            }
+            catch (Exception ex)
+            {
+                return await HandleException<TResponse>(ex);
+            }
+        }
+
+        // Generic method for handling Result<T>
+        private IActionResult HandleResult<T>(Result<T> result)
         {
             if (result.IsSuccess)
             {
@@ -17,104 +80,82 @@ namespace Nova.API.Controllers
             }
             return BadRequest(result.Errors.Select(e => e.Message));
         }
-        
-        private static async Task<Result<TResponse>> Send<TRequest, TResponse>(
-            IFeatureAction<TRequest, TResponse> action, TRequest request,
-            CancellationToken cancellationToken) where TRequest : IRequest<TResponse>
-        {
-            return await action.Execute(request, cancellationToken);
-        }
 
-        // For commands without return values
-        protected async Task<IActionResult> SendAction<TRequest>(
-            IFeatureAction<TRequest> action, TRequest request)
-            where TRequest : IRequest
-        {
-            try
-            {
-                return HandleResult(
-                    await Send(action, request, HttpContext.RequestAborted)
-                );
-            }
-            catch (Exception ex)
-            {
-                return Problem(ex);
-            }
-        }
-
-        // For commands with return values - return ActionResult<T> for better type safety
-        protected async Task<ActionResult<TResponse>> SendAction<TRequest, TResponse>(
-            IFeatureAction<TRequest, TResponse> action, TRequest request)
-            where TRequest : IRequest<TResponse>
-        {
-            try
-            {
-                var result = await Send(action, request, HttpContext.RequestAborted);
-                if (result.IsSuccess)
-                {
-                    return Ok(result.Value);
-                }
-                // Handle errors directly without delegating to Problem methods
-                var errors = result.Errors.Select(e => e.Message).ToList();
-                return BadRequest(errors);
-            }
-            catch (Exception ex)
-            {
-                // Handle exception directly
-                var error = new AppError(ex.Message, ErrorType.Unknown, "EXCEPTION");
-                var errorResponse = new ErrorResponse(error.Message, error.Code, error.Type == ErrorType.Validation);
-                return Ok(BaseResponse.CreateFailure(error.Message, new List<ErrorResponse> { errorResponse }));
-            }
-        }
-
-        protected IActionResult Problem(List<IError> errors)
+        // Handle errors using MediatR (create a command/query for error handling)
+        private async Task<ActionResult<TResponse>> HandleErrors<TResponse>(IEnumerable<IError> errors)
         {
             var appErrors = errors.Select(AppError.Get).ToList();
-            return Problem(appErrors);
-        }
-
-        protected IActionResult Problem(List<AppError> errors)
-        {
-            if (errors.Count == 0)
+            var errorCommand = new HandleErrorsCommand<TResponse>(appErrors);
+            var errorResult = await _mediator.Send(errorCommand, HttpContext.RequestAborted);
+            
+            if (errorResult.IsSuccess)
             {
-                return Problem();
+                return Ok(errorResult.Value);
             }
+            
+            // Fallback to simple BadRequest if error handling fails
+            return BadRequest(errors.Select(e => e.Message));
+        }
 
-            if (errors.All(x => x.Type == ErrorType.Validation))
+        // Handle exceptions using MediatR
+        private async Task<IActionResult> HandleException(Exception ex)
+        {
+            var exceptionCommand = new HandleExceptionCommand(ex);
+            var result = await _mediator.Send(exceptionCommand, HttpContext.RequestAborted);
+            
+            if (result.IsSuccess)
             {
-                return ValidationProblem(errors);
+                return Ok(result.Value);
             }
-
-            var errorResponses = errors.Select(e =>
-                new ErrorResponse(e.Message, e.Code, e.Type == ErrorType.Validation)
-            ).ToList();
-
-            var message = errors.First().Message;
-
-            return Ok(BaseResponse.CreateFailure(message, errorResponses));
+            
+            // Fallback
+            return StatusCode(500, "An error occurred while processing your request.");
         }
 
-        protected IActionResult Problem(AppError error)
+        // Handle exceptions with typed response using MediatR
+        private async Task<ActionResult<TResponse>> HandleException<TResponse>(Exception ex)
         {
-            var errorResponse = new ErrorResponse(error.Message, error.Code, error.Type == ErrorType.Validation);
-            return Ok(BaseResponse.CreateFailure(error.Message, new List<ErrorResponse> { errorResponse }));
+            var exceptionCommand = new HandleExceptionCommand<TResponse>(ex);
+            var result = await _mediator.Send(exceptionCommand, HttpContext.RequestAborted);
+            
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            
+            // Fallback
+            return StatusCode(500, "An error occurred while processing your request.");
         }
+    }
 
-        protected IActionResult Problem(Exception ex)
+    // MediatR Commands for error handling
+    public class HandleErrorsCommand<TResponse> : IRequest<Result<BaseResponse>>
+    {
+        public List<AppError> Errors { get; }
+
+        public HandleErrorsCommand(List<AppError> errors)
         {
-            var error = new AppError(ex.Message, ErrorType.Unknown, "EXCEPTION");
-            return Problem(error);
+            Errors = errors;
         }
+    }
 
-        private IActionResult ValidationProblem(List<AppError> errors)
+    public class HandleExceptionCommand : IRequest<Result<BaseResponse>>
+    {
+        public Exception Exception { get; }
+
+        public HandleExceptionCommand(Exception exception)
         {
-            var errorResponses = errors.Select(e =>
-                new ErrorResponse(e.Message, e.Code, true)
-            ).ToList();
+            Exception = exception;
+        }
+    }
 
-            var message = errors.First().Message;
+    public class HandleExceptionCommand<TResponse> : IRequest<Result<BaseResponse>>
+    {
+        public Exception Exception { get; }
 
-            return Ok(BaseResponse.CreateFailure(message, errorResponses));
+        public HandleExceptionCommand(Exception exception)
+        {
+            Exception = exception;
         }
     }
 }

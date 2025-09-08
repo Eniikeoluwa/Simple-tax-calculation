@@ -3,10 +3,11 @@ using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using FluentValidation;
 using Nova.API.Application.Services.Common;
+using MediatR;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
+public class LoginCommandHandler : MediatR.IRequestHandler<LoginCommand, Result<AuthResponse>>
 {
     private readonly IAuthService _authService;
     private readonly ITokenService _tokenService;
@@ -50,7 +51,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
         });
     }
 }
-public record LoginCommand(LoginRequest request) : IRequest<AuthResponse>;
+public record LoginCommand(LoginRequest request) : MediatR.IRequest<Result<AuthResponse>>;
     public class LoginCommandValidator : AbstractValidator<LoginCommand>
     {
         public LoginCommandValidator()

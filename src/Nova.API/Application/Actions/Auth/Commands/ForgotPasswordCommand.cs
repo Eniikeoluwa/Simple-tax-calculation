@@ -1,13 +1,14 @@
 
 using FluentResults;
 using Nova.API.Application.Services.Common;
+using MediatR;
 using FluentValidation;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, ForgotPasswordResponse>
+public class ForgotPasswordCommandHandler : MediatR.IRequestHandler<ForgotPasswordCommand, Result<ForgotPasswordResponse>>
 {
     private readonly IAuthService _authService;
     private readonly ITokenService _tokenService;
@@ -38,7 +39,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     }
 }
 
-public record ForgotPasswordCommand(ForgotPasswordRequest request) : IRequest<ForgotPasswordResponse>;
+public record ForgotPasswordCommand(ForgotPasswordRequest request) : MediatR.IRequest<Result<ForgotPasswordResponse>>;
 
     public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCommand>
     {

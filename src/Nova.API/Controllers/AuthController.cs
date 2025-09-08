@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Nova.API.Application.Actions.Auth.Commands;
 using Nova.Contracts.Models;
-using Nova.API.Application.Services.Common;
+using MediatR;
 
 namespace Nova.API.Controllers;
 
@@ -9,48 +9,42 @@ namespace Nova.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : BaseController
 {
+    public AuthController(IMediator mediator) : base(mediator)
+    {
+    }
+
     [HttpPost("signup")]
-    public async Task<ActionResult<AuthResponse>> SignUp([
-        FromServices] IFeatureAction<SignupCommand, AuthResponse> action,
-        [FromBody] SignupRequest request)
+    public async Task<ActionResult<AuthResponse>> SignUp([FromBody] SignupRequest request)
     {
         var command = new SignupCommand(request);
-        return await SendAction(action, command);
+        return await SendCommand<SignupCommand, AuthResponse>(command);
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponse>> Login([
-        FromServices] IFeatureAction<LoginCommand, AuthResponse> action,
-        [FromBody] LoginRequest request)
+    public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
     {
         var command = new LoginCommand(request);
-        return await SendAction(action, command);
+        return await SendCommand<LoginCommand, AuthResponse>(command);
     }
 
     [HttpPost("refresh")]
-    public async Task<ActionResult<TokenResponse>> RefreshToken([
-        FromServices] IFeatureAction<RefreshTokenCommand, TokenResponse> action,
-        [FromBody] RefreshTokenRequest request)
+    public async Task<ActionResult<TokenResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         var command = new RefreshTokenCommand(request);
-        return await SendAction(action, command);
+        return await SendCommand<RefreshTokenCommand, TokenResponse>(command);
     }
 
     [HttpPost("forgot-password")]
-    public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([
-        FromServices] IFeatureAction<ForgotPasswordCommand, ForgotPasswordResponse> action,
-        [FromBody] ForgotPasswordRequest request)
+    public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         var command = new ForgotPasswordCommand(request);
-        return await SendAction(action, command);
+        return await SendCommand<ForgotPasswordCommand, ForgotPasswordResponse>(command);
     }
 
     [HttpPost("reset-password")]
-    public async Task<ActionResult<ResetPasswordResponse>> ResetPassword([
-        FromServices] IFeatureAction<ResetPasswordCommand, ResetPasswordResponse> action,
-        [FromBody] ResetPasswordRequest request)
+    public async Task<ActionResult<ResetPasswordResponse>> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         var command = new ResetPasswordCommand(request);
-        return await SendAction(action, command);
+        return await SendCommand<ResetPasswordCommand, ResetPasswordResponse>(command);
     }
 }

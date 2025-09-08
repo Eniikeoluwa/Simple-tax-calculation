@@ -1,4 +1,5 @@
 using Nova.API.Application.Services.Common;
+using MediatR;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using FluentResults;
@@ -6,7 +7,7 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands
 {
-    public class SignupCommandHandler : IRequestHandler<SignupCommand, AuthResponse>
+    public class SignupCommandHandler : MediatR.IRequestHandler<SignupCommand, Result<AuthResponse>>
     {
         private readonly IAuthService _authService;
         private readonly ITokenService _tokenService;
@@ -17,7 +18,7 @@ namespace Nova.API.Application.Actions.Auth.Commands
             _tokenService = tokenService;
         }
 
-        public async Task<Result<AuthResponse>> Handle(SignupCommand command, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponse>> Handle(SignupCommand command, CancellationToken cancellationToken)
         {
             var userResult = await _authService.CreateUserAsync(command.request);
             if (userResult.IsFailed)
@@ -36,7 +37,7 @@ namespace Nova.API.Application.Actions.Auth.Commands
         }
     }
 
-    public record SignupCommand(SignupRequest request) : IRequest<AuthResponse>;
+    public record SignupCommand(SignupRequest request) : MediatR.IRequest<Result<AuthResponse>>;
 
     public class SignupCommandValidator : AbstractValidator<SignupCommand>
     {
