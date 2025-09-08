@@ -11,15 +11,26 @@ namespace Nova.API.Application.Actions.Auth.Commands
     {
         private readonly IAuthService _authService;
         private readonly ITokenService _tokenService;
+        private readonly ITenantService _tenantService;
 
-        public SignupCommandHandler(IAuthService authService, ITokenService tokenService)
+        public SignupCommandHandler(IAuthService authService, ITokenService tokenService, ITenantService tenantService)
         {
             _authService = authService;
             _tokenService = tokenService;
+            _tenantService = tenantService;
         }
 
-    public async Task<Result<AuthResponse>> Handle(SignupCommand command, CancellationToken cancellationToken)
+        public async Task<Result<AuthResponse>> Handle(SignupCommand command, CancellationToken cancellationToken)
         {
+            // Validate that the tenant exists and is active
+            var tenantResult = await _tenantService.GetTenantByIdAsync(command.request.TenantId);
+            if (tenantResult.IsFailed)
+                return Result.Fail("Selected company/tenant not found");
+
+            var tenant = tenantResult.Value;
+            if (!tenant.IsActive)
+                return Result.Fail("Selected company/tenant is not active");
+
             var userResult = await _authService.CreateUserAsync(command.request);
             if (userResult.IsFailed)
                 return Result.Fail(userResult.Errors);
@@ -65,6 +76,9 @@ namespace Nova.API.Application.Actions.Auth.Commands
                 .NotEmpty().WithMessage("Phone number is required")
                 .Matches(@"^[0-9+() -]{6,20}$").WithMessage("Invalid phone number format")
                 .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters");
+
+            RuleFor(x => x.request.TenantId)
+                .NotEmpty().WithMessage("Tenant selection is required");
         }
     }
 }

@@ -9,7 +9,6 @@ namespace Nova.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class TenantController : BaseController
 {
     public TenantController(IMediator mediator) : base(mediator)
@@ -21,5 +20,12 @@ public class TenantController : BaseController
     {
         var command = new CreateTenantCommand(request);
         return await SendCommand<CreateTenantCommand, TenantResponse>(command);
+    }
+
+    [HttpGet("list")]
+    public async Task<ActionResult<List<TenantResponse>>> GetAvailableTenants()
+    {
+        var query = new GetAvailableTenantsQuery();
+        return await SendQuery<GetAvailableTenantsQuery, List<TenantResponse>>(query);
     }
 }
