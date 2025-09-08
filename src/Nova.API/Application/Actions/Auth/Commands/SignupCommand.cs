@@ -42,7 +42,7 @@ namespace Nova.API.Application.Actions.Auth.Commands
                 Email = user.Email,
                 FullName = user.FullName,
                 TenantId = user.TenantId,
-                // Add other fields as needed
+
             };
             return Result.Ok(response);
         }

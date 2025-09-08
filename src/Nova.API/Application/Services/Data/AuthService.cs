@@ -76,6 +76,7 @@ public class AuthService : BaseDataService, IAuthService
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
+            TenantId  = request.TenantId,
             CreatedBy = "System",
             UpdatedBy = "System"
         };
