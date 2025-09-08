@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
     services.AddScoped<ITokenService, TokenService>();
     services.AddScoped<ITenantService, TenantService>();
     services.AddScoped<IVendorService, VendorService>();
-    services.AddScoped<ICurrentUserService, CurrentUserService>();
+    services.AddScoped<IUserService, UserService>();
     services.AddScoped<IDateService, DateService>();
 
     // FluentValidation validators

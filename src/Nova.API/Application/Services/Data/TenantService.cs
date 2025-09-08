@@ -7,30 +7,27 @@ using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Services.Data;
 
-public interface ITenantService
-{
-    Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request);
+    public interface ITenantService
+    {
+        Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request, string? createdBy = null);
     Task<Result<Tenant>> GetTenantByIdAsync(string tenantId);
     Task<Result<List<Tenant>>> GetAllTenantsAsync();
-    Task<Result<bool>> UpdateTenantAsync(Tenant tenant);
-    Task<Result<bool>> DeleteTenantAsync(string tenantId);
+    Task<Result<bool>> UpdateTenantAsync(Tenant tenant, string? updatedBy = null);
+    Task<Result<bool>> DeleteTenantAsync(string tenantId, string? updatedBy = null);
 }
 
 public class TenantService : BaseDataService, ITenantService
 {
-    private readonly ICurrentUserService _currentUserService;
-
-    public TenantService(AppDbContext context, ICurrentUserService currentUserService) : base(context)
+    public TenantService(AppDbContext context) : base(context)
     {
-        _currentUserService = currentUserService;
     }
 
-    public async Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request)
+    public async Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request, string? createdBy = null)
     {
         try
         {
-            var currentUser = _currentUserService?.UserId ?? "system";
-            
+            var creator = string.IsNullOrEmpty(createdBy) ? "Admin" : createdBy;
+
             var tenant = new Tenant
             {
                 Id = Guid.NewGuid().ToString(),
@@ -43,8 +40,8 @@ public class TenantService : BaseDataService, ITenantService
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                CreatedBy = currentUser,
-                UpdatedBy = currentUser
+                CreatedBy = creator,
+                UpdatedBy = creator
             };
 
             _context.Tenants.Add(tenant);
@@ -96,15 +93,14 @@ public class TenantService : BaseDataService, ITenantService
         }
     }
 
-    public async Task<Result<bool>> UpdateTenantAsync(Tenant tenant)
+    public async Task<Result<bool>> UpdateTenantAsync(Tenant tenant, string? updatedBy = null)
     {
         try
         {
             var existingTenant = await _context.Tenants.FindAsync(tenant.Id);
             if (existingTenant == null)
                 return Result.Fail("Tenant not found");
-
-            var currentUser = _currentUserService?.UserId ?? "system";
+            var updater = string.IsNullOrEmpty(updatedBy) ? "Admin" : updatedBy;
 
             existingTenant.Name = tenant.Name;
             existingTenant.Description = tenant.Description;
@@ -113,7 +109,7 @@ public class TenantService : BaseDataService, ITenantService
             existingTenant.Email = tenant.Email;
             existingTenant.IsActive = tenant.IsActive;
             existingTenant.UpdatedAt = DateTime.UtcNow;
-            existingTenant.UpdatedBy = currentUser;
+            existingTenant.UpdatedBy = updater;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);
@@ -124,7 +120,7 @@ public class TenantService : BaseDataService, ITenantService
         }
     }
 
-    public async Task<Result<bool>> DeleteTenantAsync(string tenantId)
+    public async Task<Result<bool>> DeleteTenantAsync(string tenantId, string? updatedBy = null)
     {
         try
         {
@@ -132,11 +128,11 @@ public class TenantService : BaseDataService, ITenantService
             if (tenant == null)
                 return Result.Fail("Tenant not found");
 
-            var currentUser = _currentUserService?.UserId ?? "system";
+            var updater = string.IsNullOrEmpty(updatedBy) ? "Admin" : updatedBy;
 
             tenant.IsActive = false;
             tenant.UpdatedAt = DateTime.UtcNow;
-            tenant.UpdatedBy = currentUser;
+            tenant.UpdatedBy = updater;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);

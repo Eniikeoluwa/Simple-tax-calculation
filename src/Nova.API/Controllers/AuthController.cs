@@ -27,7 +27,7 @@ public class AuthController : BaseController
         return await SendCommand<LoginCommand, AuthResponse>(command);
     }
 
-    [HttpPost("refresh")]
+    [HttpPost("refresh-token")]
     public async Task<ActionResult<TokenResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         var command = new RefreshTokenCommand(request);

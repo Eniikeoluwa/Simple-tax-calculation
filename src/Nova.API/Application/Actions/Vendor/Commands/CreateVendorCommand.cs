@@ -52,10 +52,6 @@ public class CreateVendorCommandValidator : AbstractValidator<CreateVendorComman
             .GreaterThanOrEqualTo(0)
             .LessThanOrEqualTo(100)
             .WithMessage("WHT rate must be between 0 and 100");
-
-        RuleFor(x => x.request.TenantId)
-            .NotEmpty()
-            .WithMessage("Tenant ID is required");
     }
 }
 

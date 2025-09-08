@@ -10,31 +10,42 @@ namespace Nova.API.Application.Services.Data;
 public interface IVendorService
 {
     Task<Result<Vendor>> CreateVendorAsync(CreateVendorRequest request);
-    // Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId);
-    // Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
+    Task<Result<List<Vendor>>> GetVendorsForCurrentTenantAsync();
+    Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
     Task<Result<bool>> UpdateVendorAsync(Vendor vendor);
     Task<Result<bool>> DeleteVendorAsync(string vendorId);
 }
 
 public class VendorService : BaseDataService, IVendorService
 {
+    private readonly string _tenantId;
+    private readonly string _userId;
+
     public VendorService(AppDbContext context) : base(context)
     {
+        _tenantId = CurrentUser.TenantId;
+        _userId = CurrentUser.UserId;
     }
 
     public async Task<Result<Vendor>> CreateVendorAsync(CreateVendorRequest request)
     {
         try
         {
+            var tenantId = _tenantId;
+            if (string.IsNullOrEmpty(tenantId))
+                return Result.Fail("User is not associated with any tenant");
+
+            var currentUser = _userId;
+
             // Check if vendor with same name exists in the tenant
             var existingVendor = await _context.Vendors
-                .FirstOrDefaultAsync(v => v.Name.ToLower() == request.Name.ToLower() && v.TenantId == request.TenantId);
+                .FirstOrDefaultAsync(v => v.Name.ToLower() == request.Name.ToLower() && v.TenantId == tenantId);
 
             if (existingVendor != null)
                 return Result.Fail("A vendor with this name already exists in this tenant");
 
             // Validate tenant exists
-            var tenant = await _context.Tenants.FindAsync(request.TenantId);
+            var tenant = await _context.Tenants.FindAsync(tenantId);
             if (tenant == null)
                 return Result.Fail("Tenant not found");
 
@@ -61,10 +72,12 @@ public class VendorService : BaseDataService, IVendorService
                 VatRate = request.VatRate,
                 WhtRate = request.WhtRate,
                 BankId = request.BankId,
-                TenantId = request.TenantId,
+                TenantId = tenantId,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                CreatedBy = currentUser,
+                UpdatedBy = currentUser
             };
 
             _context.Vendors.Add(vendor);
@@ -78,44 +91,52 @@ public class VendorService : BaseDataService, IVendorService
         }
     }
 
-    // public async Task<Result<List<Vendor>>> GetVendorsByTenantIdAsync(string tenantId)
-    // {
-    //     try
-    //     {
-    //         var vendors = await _context.Vendors
-    //             .Include(v => v.Bank)
-    //             .Include(v => v.Tenant)
-    //             .Where(v => v.TenantId == tenantId && v.IsActive)
-    //             .OrderBy(v => v.Name)
-    //             .ToListAsync();
+    public async Task<Result<List<Vendor>>> GetVendorsForCurrentTenantAsync()
+    {
+        try
+        {
+            var tenantId = _tenantId;
+            if (string.IsNullOrEmpty(tenantId))
+                return Result.Fail("User is not associated with any tenant");
 
-    //         return Result.Ok(vendors);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return Result.Fail($"Failed to get vendors: {ex.Message}");
-    //     }
-    // }
+            var vendors = await _context.Vendors
+                .Include(v => v.Bank)
+                .Include(v => v.Tenant)
+                .Where(v => v.TenantId == tenantId && v.IsActive)
+                .OrderBy(v => v.Name)
+                .ToListAsync();
 
-    // public async Task<Result<Vendor>> GetVendorByIdAsync(string vendorId)
-    // {
-    //     try
-    //     {
-    //         var vendor = await _context.Vendors
-    //             .Include(v => v.Bank)
-    //             .Include(v => v.Tenant)
-    //             .FirstOrDefaultAsync(v => v.Id == vendorId);
+            return Result.Ok(vendors);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to get vendors: {ex.Message}");
+        }
+    }
 
-    //         if (vendor == null)
-    //             return Result.Fail("Vendor not found");
+    public async Task<Result<Vendor>> GetVendorByIdAsync(string vendorId)
+    {
+        try
+        {
+            var tenantId = _tenantId;
+            if (string.IsNullOrEmpty(tenantId))
+                return Result.Fail("User is not associated with any tenant");
 
-    //         return Result.Ok(vendor);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return Result.Fail($"Failed to get vendor: {ex.Message}");
-    //     }
-    // }
+            var vendor = await _context.Vendors
+                .Include(v => v.Bank)
+                .Include(v => v.Tenant)
+                .FirstOrDefaultAsync(v => v.Id == vendorId && v.TenantId == tenantId);
+
+            if (vendor == null)
+                return Result.Fail("Vendor not found");
+
+            return Result.Ok(vendor);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to get vendor: {ex.Message}");
+        }
+    }
 
     public async Task<Result<bool>> UpdateVendorAsync(Vendor vendor)
     {
@@ -124,6 +145,10 @@ public class VendorService : BaseDataService, IVendorService
             var existingVendor = await _context.Vendors.FindAsync(vendor.Id);
             if (existingVendor == null)
                 return Result.Fail("Vendor not found");
+
+            // Ensure vendor belongs to current tenant
+            if (!string.IsNullOrEmpty(_tenantId) && existingVendor.TenantId != _tenantId)
+                return Result.Fail("Vendor not found in current tenant");
 
             // Update properties
             existingVendor.Name = vendor.Name;
@@ -140,6 +165,7 @@ public class VendorService : BaseDataService, IVendorService
             existingVendor.BankId = vendor.BankId;
             existingVendor.IsActive = vendor.IsActive;
             existingVendor.UpdatedAt = DateTime.UtcNow;
+            existingVendor.UpdatedBy = _userId;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);
@@ -158,9 +184,13 @@ public class VendorService : BaseDataService, IVendorService
             if (vendor == null)
                 return Result.Fail("Vendor not found");
 
+            if (!string.IsNullOrEmpty(_tenantId) && vendor.TenantId != _tenantId)
+                return Result.Fail("Vendor not found in current tenant");
+
             vendor.IsActive = false;
             vendor.UpdatedAt = DateTime.UtcNow;
-            
+            vendor.UpdatedBy = _userId;
+
             _context.Vendors.Update(vendor);
             await _context.SaveChangesAsync();
 

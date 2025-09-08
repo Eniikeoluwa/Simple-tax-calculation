@@ -3,6 +3,7 @@ using Nova.API.Extensions;
 using Nova.Infrastructure;
 using Microsoft.OpenApi.Models;
 using FluentValidation;
+using Nova.API.Application.Services.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,9 @@ builder.Services.AddSwaggerWithJwt();
 builder.Services.AddCorsPolicy();
 
 var app = builder.Build();
+
+// Configure static CurrentUser class
+CurrentUser.Configure(app.Services.GetRequiredService<IHttpContextAccessor>());
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

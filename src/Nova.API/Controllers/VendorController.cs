@@ -25,13 +25,11 @@ public class VendorController : BaseController
         return await SendCommand<CreateVendorCommand, VendorResponse>(command);
     }
 
-    // [HttpGet("tenant/{tenantId}")]
-    // public async Task<IActionResult> GetVendorsByTenant(
-    //     [FromServices] IFeatureAction<GetVendorsQuery, GetVendorsResponse> action,
-    //     string tenantId)
-    // {
-    //     var query = new GetVendorsQuery { TenantId = tenantId };
-    //     return await SendAction(action, query);
-    // }
+    [HttpGet("list")]
+    public async Task<ActionResult<List<VendorResponse>>> GetVendors()
+    {
+        var query = new GetVendorsQuery();
+        return await SendQuery<GetVendorsQuery, List<VendorResponse>>(query);
+    }
 }
 

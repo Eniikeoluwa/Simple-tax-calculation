@@ -14,7 +14,6 @@ public class CreateVendorRequest
     public decimal VatRate { get; set; } = 7.5m;
     public decimal WhtRate { get; set; } = 2.0m;
     public string BankId { get; set; } = string.Empty;
-    public string TenantId { get; set; } = string.Empty;
 }
 
 public class VendorResponse
