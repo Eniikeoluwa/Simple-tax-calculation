@@ -42,7 +42,7 @@ namespace Nova.API.Controllers
                 {
                     return Ok(result.Value);
                 }
-                
+
                 return await HandleErrors<TResponse>(result.Errors);
             }
             catch (Exception ex)
@@ -62,7 +62,7 @@ namespace Nova.API.Controllers
                 {
                     return Ok(result.Value);
                 }
-                
+
                 return await HandleErrors<TResponse>(result.Errors);
             }
             catch (Exception ex)
@@ -81,81 +81,62 @@ namespace Nova.API.Controllers
             return BadRequest(result.Errors.Select(e => e.Message));
         }
 
-        // Handle errors using MediatR (create a command/query for error handling)
-        private async Task<ActionResult<TResponse>> HandleErrors<TResponse>(IEnumerable<IError> errors)
+        // Handle errors directly without MediatR
+        private Task<ActionResult<TResponse>> HandleErrors<TResponse>(IEnumerable<IError> errors)
         {
             var appErrors = errors.Select(AppError.Get).ToList();
-            var errorCommand = new HandleErrorsCommand<TResponse>(appErrors);
-            var errorResult = await _mediator.Send(errorCommand, HttpContext.RequestAborted);
             
-            if (errorResult.IsSuccess)
+            if (appErrors.Count == 0)
             {
-                return Ok(errorResult.Value);
+                var unknownErrorResponse = BaseResponse.CreateFailure("Unknown error occurred", new List<ErrorResponse>());
+                return Task.FromResult<ActionResult<TResponse>>(BadRequest(unknownErrorResponse));
             }
-            
-            // Fallback to simple BadRequest if error handling fails
-            return BadRequest(errors.Select(e => e.Message));
-        }
 
-        // Handle exceptions using MediatR
-        private async Task<IActionResult> HandleException(Exception ex)
-        {
-            var exceptionCommand = new HandleExceptionCommand(ex);
-            var result = await _mediator.Send(exceptionCommand, HttpContext.RequestAborted);
-            
-            if (result.IsSuccess)
+            if (appErrors.All(x => x.Type == ErrorType.Validation))
             {
-                return Ok(result.Value);
+                return Task.FromResult(HandleValidationErrors<TResponse>(appErrors));
             }
+
+            var errorResponses = appErrors.Select(e =>
+                new ErrorResponse(e.Message, e.Code, e.Type == ErrorType.Validation)
+            ).ToList();
+
+            var message = appErrors.First().Message;
+            var response = BaseResponse.CreateFailure(message, errorResponses);
             
-            // Fallback
-            return StatusCode(500, "An error occurred while processing your request.");
+            return Task.FromResult<ActionResult<TResponse>>(BadRequest(response));
         }
 
-        // Handle exceptions with typed response using MediatR
-        private async Task<ActionResult<TResponse>> HandleException<TResponse>(Exception ex)
+        private ActionResult<TResponse> HandleValidationErrors<TResponse>(List<AppError> errors)
         {
-            var exceptionCommand = new HandleExceptionCommand<TResponse>(ex);
-            var result = await _mediator.Send(exceptionCommand, HttpContext.RequestAborted);
+            var errorResponses = errors.Select(e =>
+                new ErrorResponse(e.Message, e.Code, true)
+            ).ToList();
+
+            var message = errors.First().Message;
+            var response = BaseResponse.CreateFailure(message, errorResponses);
             
-            if (result.IsSuccess)
-            {
-                return Ok(result.Value);
-            }
+            return BadRequest(response);
+        }
+
+        // Handle exceptions directly without MediatR
+        private Task<IActionResult> HandleException(Exception ex)
+        {
+            var error = new AppError(ex.Message, ErrorType.Unknown, "EXCEPTION");
+            var errorResponse = new ErrorResponse(error.Message, error.Code, error.Type == ErrorType.Validation);
+            var response = BaseResponse.CreateFailure(error.Message, new List<ErrorResponse> { errorResponse });
             
-            // Fallback
-            return StatusCode(500, "An error occurred while processing your request.");
+            return Task.FromResult<IActionResult>(StatusCode(500, response));
         }
-    }
 
-    // MediatR Commands for error handling
-    public class HandleErrorsCommand<TResponse> : IRequest<Result<BaseResponse>>
-    {
-        public List<AppError> Errors { get; }
-
-        public HandleErrorsCommand(List<AppError> errors)
+        // Handle exceptions with typed response directly without MediatR
+        private Task<ActionResult<TResponse>> HandleException<TResponse>(Exception ex)
         {
-            Errors = errors;
-        }
-    }
-
-    public class HandleExceptionCommand : IRequest<Result<BaseResponse>>
-    {
-        public Exception Exception { get; }
-
-        public HandleExceptionCommand(Exception exception)
-        {
-            Exception = exception;
-        }
-    }
-
-    public class HandleExceptionCommand<TResponse> : IRequest<Result<BaseResponse>>
-    {
-        public Exception Exception { get; }
-
-        public HandleExceptionCommand(Exception exception)
-        {
-            Exception = exception;
+            var error = new AppError(ex.Message, ErrorType.Unknown, "EXCEPTION");
+            var errorResponse = new ErrorResponse(error.Message, error.Code, error.Type == ErrorType.Validation);
+            var response = BaseResponse.CreateFailure(error.Message, new List<ErrorResponse> { errorResponse });
+            
+            return Task.FromResult<ActionResult<TResponse>>(StatusCode(500, response));
         }
     }
 }

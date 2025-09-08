@@ -1,7 +1,6 @@
 using FluentResults;
-using Nova.API.Application.Services.Common;
-using MediatR;
 using Nova.API.Application.Services.Data;
+using MediatR;
 using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Tenant;
@@ -17,16 +16,20 @@ public class CreateTenantCommandHandler : MediatR.IRequestHandler<CreateTenantCo
         _tenantService = tenantService;
     }
 
-    public async Task<Result<TenantResponse>> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
+    public async Task<Result<TenantResponse>> Handle(CreateTenantCommand command, CancellationToken cancellationToken)
     {
-        var tenantResult = await _tenantService.CreateTenantAsync(request.request);
-
+        var tenantResult = await _tenantService.CreateTenantAsync(command.request);
         if (tenantResult.IsFailed)
             return Result.Fail(tenantResult.Errors);
 
         var tenant = tenantResult.Value;
+        var response = MapToTenantResponse(tenant);
+        return Result.Ok(response);
+    }
 
-        return Result.Ok(new TenantResponse
+    private static TenantResponse MapToTenantResponse(Domain.Entities.Tenant tenant)
+    {
+        return new TenantResponse
         {
             Id = tenant.Id,
             Name = tenant.Name,
@@ -37,6 +40,6 @@ public class CreateTenantCommandHandler : MediatR.IRequestHandler<CreateTenantCo
             Email = tenant.Email,
             IsActive = tenant.IsActive,
             CreatedAt = tenant.CreatedAt
-        });
+        };
     }
 }

@@ -18,14 +18,19 @@ public interface ITenantService
 
 public class TenantService : BaseDataService, ITenantService
 {
-    public TenantService(AppDbContext context) : base(context)
+    private readonly ICurrentUserService _currentUserService;
+
+    public TenantService(AppDbContext context, ICurrentUserService currentUserService) : base(context)
     {
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request)
     {
         try
         {
+            var currentUser = _currentUserService?.UserId ?? "system";
+            
             var tenant = new Tenant
             {
                 Id = Guid.NewGuid().ToString(),
@@ -37,7 +42,9 @@ public class TenantService : BaseDataService, ITenantService
                 Email = request.Email,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                CreatedBy = currentUser,
+                UpdatedBy = currentUser
             };
 
             _context.Tenants.Add(tenant);
@@ -97,6 +104,8 @@ public class TenantService : BaseDataService, ITenantService
             if (existingTenant == null)
                 return Result.Fail("Tenant not found");
 
+            var currentUser = _currentUserService?.UserId ?? "system";
+
             existingTenant.Name = tenant.Name;
             existingTenant.Description = tenant.Description;
             existingTenant.Address = tenant.Address;
@@ -104,6 +113,7 @@ public class TenantService : BaseDataService, ITenantService
             existingTenant.Email = tenant.Email;
             existingTenant.IsActive = tenant.IsActive;
             existingTenant.UpdatedAt = DateTime.UtcNow;
+            existingTenant.UpdatedBy = currentUser;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);
@@ -122,8 +132,11 @@ public class TenantService : BaseDataService, ITenantService
             if (tenant == null)
                 return Result.Fail("Tenant not found");
 
+            var currentUser = _currentUserService?.UserId ?? "system";
+
             tenant.IsActive = false;
             tenant.UpdatedAt = DateTime.UtcNow;
+            tenant.UpdatedBy = currentUser;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);
