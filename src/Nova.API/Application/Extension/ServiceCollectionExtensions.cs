@@ -28,7 +28,6 @@ public static class ServiceCollectionExtensions
     services.AddScoped<ITenantService, TenantService>();
     services.AddScoped<IVendorService, VendorService>();
     services.AddScoped<IUserService, UserService>();
-    services.AddScoped<IDateService, DateService>();
 
     // FluentValidation validators
     services.AddValidatorsFromAssembly(typeof(Program).Assembly);
@@ -60,6 +59,28 @@ public static class ServiceCollectionExtensions
                 ValidAudience = audience,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                 ClockSkew = TimeSpan.Zero
+            };
+            // Diagnostic events to surface authentication issues in logs
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("JwtBearer");
+                    logger?.LogError(context.Exception, "Authentication failed: {Message}", context.Exception.Message);
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("JwtBearer");
+                    logger?.LogInformation("Token validated for {Name}", context.Principal?.Identity?.Name ?? "unknown");
+                    return Task.CompletedTask;
+                },
+                OnChallenge = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("JwtBearer");
+                    logger?.LogWarning("OnChallenge triggered: {Error} - {ErrorDescription}", context.Error, context.ErrorDescription);
+                    return Task.CompletedTask;
+                }
             };
         });
 
