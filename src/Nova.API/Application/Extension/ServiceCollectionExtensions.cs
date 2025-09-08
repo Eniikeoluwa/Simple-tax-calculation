@@ -13,7 +13,9 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Add MediatR
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+        // services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+        // Register IHttpContextAccessor (required by CurrentUserService and for design-time activation)
+        services.AddHttpContextAccessor();
 
     // Add custom services
     services.AddScoped<IAuthService, AuthService>();
