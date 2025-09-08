@@ -5,8 +5,10 @@ using Microsoft.OpenApi.Models;
 using Nova.API.Application.Services.Common;
 using Nova.API.Application.Services.Data;
 using Nova.API.Application.Actions.Auth.Commands;
-using Nova.API.Application.Actions.Tenant;
-using Nova.API.Application.Actions.Vendor;
+using Nova.API.Application.Actions.Tenant.Commands;
+using Nova.API.Application.Actions.Tenant.Queries;
+using Nova.API.Application.Actions.Vendor.Commands;
+using Nova.API.Application.Actions.Vendor.Queries;
 using Nova.Contracts.Models;
 using FluentValidation;
 

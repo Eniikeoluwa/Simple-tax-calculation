@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nova.API.Application.Actions.Commands.Tenant;
-using Nova.API.Application.Actions.Queries.Tenant;
+using Nova.API.Application.Actions.Tenant.Commands;
+using Nova.API.Application.Actions.Tenant.Queries;
 using Nova.API.Extensions;
 using Nova.Contracts.Models;
 using MediatR;

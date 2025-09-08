@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Nova.Contracts")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d4bcfec8bf00c67008ccaed3f438fa6b6a3ef3ec")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b55a7e48aca45c59945a901d7545f7e785f4fc52")]
 [assembly: System.Reflection.AssemblyProductAttribute("Nova.Contracts")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Nova.Contracts")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

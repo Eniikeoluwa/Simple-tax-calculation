@@ -3,7 +3,7 @@ using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using MediatR;
 
-namespace Nova.API.Application.Actions.Queries.Tenant;
+namespace Nova.API.Application.Actions.Tenant.Queries;
 
 public record GetAvailableTenantsQuery() : MediatR.IRequest<Result<List<TenantResponse>>>;
 

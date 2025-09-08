@@ -3,7 +3,7 @@ using MediatR;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 
-namespace Nova.API.Application.Actions.Queries.User;
+namespace Nova.API.Application.Actions.User.Queries;
 
 public record GetUsersQuery() : MediatR.IRequest<Result<List<UserResponse>>>;
 

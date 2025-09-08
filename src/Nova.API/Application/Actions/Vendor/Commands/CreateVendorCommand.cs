@@ -6,7 +6,7 @@ using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 using Nova.Domain.Entities;
 
-namespace Nova.API.Application.Actions.Commands.Vendor;
+namespace Nova.API.Application.Actions.Vendor.Commands;
 
 public record CreateVendorCommand(CreateVendorRequest request) : MediatR.IRequest<Result<VendorResponse>>;
 

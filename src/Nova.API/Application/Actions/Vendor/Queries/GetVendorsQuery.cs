@@ -3,7 +3,7 @@ using MediatR;
 using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 
-namespace Nova.API.Application.Actions.Queries.Vendor;
+namespace Nova.API.Application.Actions.Vendor.Queries;
 
 public record GetVendorsQuery() : MediatR.IRequest<Result<List<VendorResponse>>>;
 
