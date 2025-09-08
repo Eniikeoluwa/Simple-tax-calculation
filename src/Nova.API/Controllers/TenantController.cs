@@ -16,16 +16,9 @@ public class TenantController : BaseController
     {
     }
 
-    [HttpPost]
+    [HttpPost("create")]
     public async Task<ActionResult<TenantResponse>> CreateTenant([FromBody] CreateTenantRequest request)
     {
-        // Ensure user is authenticated and is an admin
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
         var command = new CreateTenantCommand(request);
         return await SendCommand<CreateTenantCommand, TenantResponse>(command);
     }
