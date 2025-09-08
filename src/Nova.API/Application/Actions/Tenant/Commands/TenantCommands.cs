@@ -3,7 +3,7 @@ using Nova.API.Application.Services.Data;
 using MediatR;
 using Nova.Contracts.Models;
 
-namespace Nova.API.Application.Actions.Tenant;
+namespace Nova.API.Application.Actions.Commands.Tenant;
 
 public record CreateTenantCommand(CreateTenantRequest request) : MediatR.IRequest<Result<TenantResponse>>;
 

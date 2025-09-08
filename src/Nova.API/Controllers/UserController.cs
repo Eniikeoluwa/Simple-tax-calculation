@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nova.API.Application.Actions.User;
+using Nova.API.Application.Actions.Queries.User;
 using Nova.API.Controllers;
 using Nova.Contracts.Models;
 using MediatR;
