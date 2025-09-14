@@ -46,8 +46,7 @@ public class AuthService : BaseDataService, IAuthService
         {
             return Result.Fail("Invalid email or password");
         }
-
-        // Update last login
+        
         user.LastLoginAt = DateTime.UtcNow;
         user.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
