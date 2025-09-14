@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<ITokenService, TokenService>();
     services.AddScoped<ITenantService, TenantService>();
+    services.AddScoped<IBankService, BankService>();
     services.AddScoped<IVendorService, VendorService>();
     services.AddScoped<IUserService, UserService>();
 
