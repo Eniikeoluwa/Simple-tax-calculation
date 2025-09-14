@@ -10,7 +10,7 @@ public class Vendor : BaseEntity
     public string PhoneNumber { get; set; }
     public string Email { get; set; }
     public string TaxIdentificationNumber { get; set; }
-    public string TaxType { get; set; } // "None", "VAT", "WHT", "Both"
+    public string TaxType { get; set; }
     public decimal VatRate { get; set; } = 7.5m;
     public decimal WhtRate { get; set; } = 2.0m;
     public bool IsActive { get; set; }

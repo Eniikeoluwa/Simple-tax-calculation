@@ -14,6 +14,10 @@ public class CreateVendorRequest
     public decimal VatRate { get; set; } = 7.5m;
     public decimal WhtRate { get; set; } = 2.0m;
     public string BankId { get; set; } = string.Empty;
+    // Optional bank details: if BankId is not provided or doesn't exist, a new Bank will be created
+    public string BankName { get; set; } = string.Empty;
+    public string BankSortCode { get; set; } = string.Empty;
+    public string BankCode { get; set; } = string.Empty;
 }
 
 public class VendorResponse
@@ -34,6 +38,17 @@ public class VendorResponse
     public string BankId { get; set; } = string.Empty;
     public string TenantId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    
+    // Bank details
+    public BankInfo? Bank { get; set; }
+}
+
+public class BankInfo
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string SortCode { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
 }
 
 public class GetVendorsResponse
