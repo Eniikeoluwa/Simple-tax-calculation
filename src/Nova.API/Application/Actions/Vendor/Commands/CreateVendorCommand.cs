@@ -10,6 +10,57 @@ namespace Nova.API.Application.Actions.Vendor.Commands;
 
 public record CreateVendorCommand(CreateVendorRequest request) : MediatR.IRequest<Result<VendorResponse>>;
 
+public class CreateVendorCommandHandler : MediatR.IRequestHandler<CreateVendorCommand, Result<VendorResponse>>
+{
+    private readonly IVendorService _vendorService;
+
+    public CreateVendorCommandHandler(IVendorService vendorService)
+    {
+        _vendorService = vendorService;
+    }
+
+    public async Task<Result<VendorResponse>> Handle(CreateVendorCommand request, CancellationToken cancellationToken)
+    {
+        var vendorResult = await _vendorService.CreateVendorAsync(request.request);
+        if (vendorResult.IsFailed)
+            return Result.Fail(vendorResult.Errors);
+
+        var vendor = vendorResult.Value;
+
+        var response = new VendorResponse
+        {
+            Id = vendor.Id,
+            Name = vendor.Name,
+            Code = vendor.Code,
+            AccountName = vendor.AccountName,
+            AccountNumber = vendor.AccountNumber,
+            Address = vendor.Address,
+            PhoneNumber = vendor.PhoneNumber,
+            Email = vendor.Email,
+            TaxIdentificationNumber = vendor.TaxIdentificationNumber,
+            TaxType = vendor.TaxType,
+            VatRate = vendor.VatRate,
+            WhtRate = vendor.WhtRate,
+            IsActive = vendor.IsActive,
+            BankId = vendor.BankId,
+            TenantId = vendor.TenantId,
+            CreatedAt = vendor.CreatedAt
+        };
+
+        if (vendor.Bank != null)
+        {
+            response.Bank = new BankInfo
+            {
+                Id = vendor.Bank.Id,
+                Name = vendor.Bank.Name,
+                SortCode = vendor.Bank.SortCode,
+                Code = vendor.Bank.Code
+            };
+        }
+
+        return Result.Ok(response);
+    }
+}
 public class CreateVendorCommandValidator : AbstractValidator<CreateVendorCommand>
 {
     public CreateVendorCommandValidator()
@@ -52,44 +103,25 @@ public class CreateVendorCommandValidator : AbstractValidator<CreateVendorComman
             .GreaterThanOrEqualTo(0)
             .LessThanOrEqualTo(100)
             .WithMessage("WHT rate must be between 0 and 100");
-    }
-}
 
-public class CreateVendorCommandHandler : MediatR.IRequestHandler<CreateVendorCommand, Result<VendorResponse>>
-{
-    private readonly IVendorService _vendorService;
+        RuleFor(x => x.request)
+            .Must(x => !string.IsNullOrEmpty(x.BankId) || !string.IsNullOrEmpty(x.BankName))
+            .WithMessage("Either BankId or BankName must be provided");
 
-    public CreateVendorCommandHandler(IVendorService vendorService)
-    {
-        _vendorService = vendorService;
-    }
+        RuleFor(x => x.request.BankName)
+            .NotEmpty()
+            .MaximumLength(200)
+            .When(x => string.IsNullOrEmpty(x.request.BankId) && !string.IsNullOrEmpty(x.request.BankName))
+            .WithMessage("Bank name is required when creating a new bank and must not exceed 200 characters");
 
-    public async Task<Result<VendorResponse>> Handle(CreateVendorCommand request, CancellationToken cancellationToken)
-    {
-        var vendorResult = await _vendorService.CreateVendorAsync(request.request);
-        if (vendorResult.IsFailed)
-            return Result.Fail(vendorResult.Errors);
+        RuleFor(x => x.request.BankSortCode)
+            .MaximumLength(50)
+            .When(x => !string.IsNullOrEmpty(x.request.BankName))
+            .WithMessage("Bank sort code must not exceed 50 characters");
 
-        var vendor = vendorResult.Value;
-
-        return Result.Ok(new VendorResponse
-        {
-            Id = vendor.Id,
-            Name = vendor.Name,
-            Code = vendor.Code,
-            AccountName = vendor.AccountName,
-            AccountNumber = vendor.AccountNumber,
-            Address = vendor.Address,
-            PhoneNumber = vendor.PhoneNumber,
-            Email = vendor.Email,
-            TaxIdentificationNumber = vendor.TaxIdentificationNumber,
-            TaxType = vendor.TaxType,
-            VatRate = vendor.VatRate,
-            WhtRate = vendor.WhtRate,
-            IsActive = vendor.IsActive,
-            BankId = vendor.BankId,
-            TenantId = vendor.TenantId,
-            CreatedAt = vendor.CreatedAt
-        });
+        RuleFor(x => x.request.BankCode)
+            .MaximumLength(50)
+            .When(x => !string.IsNullOrEmpty(x.request.BankName))
+            .WithMessage("Bank code must not exceed 50 characters");
     }
 }
