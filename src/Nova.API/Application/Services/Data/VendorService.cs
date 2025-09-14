@@ -20,11 +20,13 @@ public class VendorService : BaseDataService, IVendorService
 {
     private readonly string _tenantId;
     private readonly string _userId;
+    private readonly IBankService _bankService;
 
-    public VendorService(AppDbContext context) : base(context)
+    public VendorService(AppDbContext context, IBankService bankService) : base(context)
     {
         _tenantId = CurrentUser.TenantId;
         _userId = CurrentUser.UserId;
+        _bankService = bankService;
     }
 
     public async Task<Result<Vendor>> CreateVendorAsync(CreateVendorRequest request)
@@ -49,13 +51,30 @@ public class VendorService : BaseDataService, IVendorService
             if (tenant == null)
                 return Result.Fail("Tenant not found");
 
-            // Validate bank exists if provided
-            if (!string.IsNullOrEmpty(request.BankId))
+            string bankId = request.BankId;
+            
+            // Handle bank creation or finding
+            if (!string.IsNullOrEmpty(request.BankName))
             {
-                var bank = await _context.Banks.FindAsync(request.BankId);
-                if (bank == null)
+                // Create or find bank using the provided bank details
+                var bankResult = await _bankService.FindOrCreateBankAsync(
+                    request.BankName, 
+                    request.BankSortCode, 
+                    request.BankCode);
+                
+                if (bankResult.IsFailed)
+                    return Result.Fail($"Failed to create or find bank: {string.Join(", ", bankResult.Errors.Select(e => e.Message))}");
+                
+                bankId = bankResult.Value.Id;
+            }
+            else if (!string.IsNullOrEmpty(request.BankId))
+            {
+                // Validate existing bank if BankId is provided
+                var bankResult = await _bankService.GetBankByIdAsync(request.BankId);
+                if (bankResult.IsFailed)
                     return Result.Fail("Bank not found");
             }
+            // If neither BankId nor BankName is provided, bankId will remain null/empty
 
             var vendor = new Vendor
             {
@@ -71,7 +90,7 @@ public class VendorService : BaseDataService, IVendorService
                 TaxType = request.TaxType,
                 VatRate = request.VatRate,
                 WhtRate = request.WhtRate,
-                BankId = request.BankId,
+                BankId = bankId,
                 TenantId = tenantId,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
