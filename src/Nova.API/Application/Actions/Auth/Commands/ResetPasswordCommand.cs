@@ -7,7 +7,6 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
-
 public class ResetPasswordCommandHandler : MediatR.IRequestHandler<ResetPasswordCommand, Result<ResetPasswordResponse>>
 {
     private readonly IAuthService _authService;
@@ -28,8 +27,11 @@ public class ResetPasswordCommandHandler : MediatR.IRequestHandler<ResetPassword
         if (updateResult.IsFailed)
             return Result.Fail(updateResult.Errors);
 
-        // Return a response DTO for success
-        return Result.Ok(new ResetPasswordResponse { Success = true, Email = user.Email });
+        return Result.Ok(new ResetPasswordResponse
+        {
+            Success = true,
+            Email = user.Email
+        });
     }
 }
 public record ResetPasswordCommand(ResetPasswordRequest request) : MediatR.IRequest<Result<ResetPasswordResponse>>;
