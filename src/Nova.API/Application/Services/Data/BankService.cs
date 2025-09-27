@@ -9,11 +9,11 @@ namespace Nova.API.Application.Services.Data;
 
 public interface IBankService
 {
-    Task<Result<Bank>> CreateBankAsync(string name, string sortCode, string code);
+    Task<Result<Bank>> CreateBankAsync(CreateBankRequest request);
     Task<Result<Bank>> GetBankByIdAsync(string bankId);
-    Task<Result<Bank>> FindOrCreateBankAsync(string name, string sortCode, string code);
+    Task<Result<Bank>> FindOrCreateBankAsync(CreateBankRequest request);
     Task<Result<List<Bank>>> GetAllBanksAsync();
-    Task<Result<bool>> UpdateBankAsync(Bank bank);
+    Task<Result<Bank>> UpdateBankAsync(UpdateBankRequest request);
 }
 
 public class BankService : BaseDataService, IBankService
@@ -25,14 +25,14 @@ public class BankService : BaseDataService, IBankService
         _userId = CurrentUser.UserId;
     }
 
-    public async Task<Result<Bank>> CreateBankAsync(string name, string sortCode, string code)
+    public async Task<Result<Bank>> CreateBankAsync(CreateBankRequest request)
     {
         try
         {
             // Check if bank with same name and sort code already exists
             var existingBank = await _context.Banks
-                .FirstOrDefaultAsync(b => b.Name.ToLower() == name.ToLower() 
-                    && b.SortCode.ToLower() == sortCode.ToLower() 
+                .FirstOrDefaultAsync(b => b.Name.ToLower() == requestname.ToLower() 
+                    && b.SortCode.ToLower() == request.sortCode.ToLower() 
                     && b.IsActive);
 
             if (existingBank != null)
@@ -82,17 +82,17 @@ public class BankService : BaseDataService, IBankService
         }
     }
 
-    public async Task<Result<Bank>> FindOrCreateBankAsync(string name, string sortCode, string code)
+    public async Task<Result<Bank>> FindOrCreateBankAsync(CreateBankRequest request)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(request.Name))
                 return Result.Fail("Bank name is required");
 
             // Try to find existing bank first
             var existingBank = await _context.Banks
-                .FirstOrDefaultAsync(b => b.Name.ToLower() == name.ToLower() 
-                    && b.SortCode.ToLower() == sortCode.ToLower() 
+                .FirstOrDefaultAsync(b => b.Name.ToLower() == request.Name.ToLower()
+                    && b.SortCode.ToLower() == request.SortCode.ToLower()
                     && b.IsActive);
 
             if (existingBank != null)
@@ -124,23 +124,23 @@ public class BankService : BaseDataService, IBankService
         }
     }
 
-    public async Task<Result<bool>> UpdateBankAsync(Bank bank)
+    public async Task<Result<Bank>> UpdateBankAsync(UpdateBankRequest request)
     {
         try
         {
-            var existingBank = await _context.Banks.FindAsync(bank.Id);
+            var existingBank = await _context.Banks.FindAsync(request.Id);
             if (existingBank == null)
                 return Result.Fail("Bank not found");
 
-            existingBank.Name = bank.Name;
-            existingBank.SortCode = bank.SortCode;
-            existingBank.Code = bank.Code;
-            existingBank.IsActive = bank.IsActive;
+            existingBank.Name = request.Name;
+            existingBank.SortCode = request.SortCode;
+            existingBank.Code = request.Code;
+            existingBank.IsActive = request.IsActive;
             existingBank.UpdatedAt = DateTime.UtcNow;
             existingBank.UpdatedBy = _userId ?? "System";
 
             await _context.SaveChangesAsync();
-            return Result.Ok(true);
+            return Result.Ok(existingBank);
         }
         catch (Exception ex)
         {
