@@ -36,7 +36,7 @@ public class BankService : BaseDataService, IBankService
                     && b.IsActive);
 
             if (existingBank != null)
-                return Result.Ok(existingBank); // Return existing bank instead of failing
+                return Result.Ok(existingBank);
 
             var currentUser = _userId ?? "System";
 
