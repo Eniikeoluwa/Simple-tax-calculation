@@ -31,8 +31,8 @@ public class BankService : BaseDataService, IBankService
         {
             // Check if bank with same name and sort code already exists
             var existingBank = await _context.Banks
-                .FirstOrDefaultAsync(b => b.Name.ToLower() == requestname.ToLower() 
-                    && b.SortCode.ToLower() == request.sortCode.ToLower() 
+                .FirstOrDefaultAsync(b => b.Name.ToLower() == request.Name.ToLower() 
+                    && b.SortCode.ToLower() == request.SortCode.ToLower() 
                     && b.IsActive);
 
             if (existingBank != null)
@@ -43,9 +43,9 @@ public class BankService : BaseDataService, IBankService
             var bank = new Bank
             {
                 Id = Guid.NewGuid().ToString(),
-                Name = name,
-                SortCode = sortCode,
-                Code = code,
+                Name = request.Name,
+                SortCode = request.SortCode,
+                Code = request.Code,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
@@ -99,7 +99,7 @@ public class BankService : BaseDataService, IBankService
                 return Result.Ok(existingBank);
 
             // Create new bank if not found
-            return await CreateBankAsync(name, sortCode, code);
+            return await CreateBankAsync(request);
         }
         catch (Exception ex)
         {
