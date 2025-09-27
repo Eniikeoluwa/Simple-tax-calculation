@@ -25,7 +25,7 @@ public class GetAvailableTenantsQueryHandler : MediatR.IRequestHandler<GetAvaila
         var tenants = tenantsResult.Value;
         
         var response = tenants
-            .Where(t => t.IsActive) // Only return active tenants for selection
+            .Where(t => t.IsActive) 
             .Select(t => new TenantResponse
             {
                 Id = t.Id,
