@@ -37,7 +37,6 @@ public class RefreshTokenCommandHandler : MediatR.IRequestHandler<RefreshTokenCo
         if (user == null)
             return Result.Fail("Associated user not found");
 
-        // revoke old refresh token
         await _authService.RevokeRefreshTokenAsync(existingRt.Token);
 
         var newAccessToken = _tokenService.GenerateAccessToken(user);
