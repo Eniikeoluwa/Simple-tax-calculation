@@ -46,14 +46,12 @@ public class TokenService : ITokenService
             new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };
 
-        // Add tenant claim if present on user
         if (!string.IsNullOrWhiteSpace(user.TenantId))
         {
             claims.Add(new Claim("tenant_id", user.TenantId));
             claims.Add(new Claim("primary_tenant_id", user.TenantId));
         }
 
-        // Add role claim if property exists on user via reflection (optional)
         var roleProp = user.GetType().GetProperty("Role");
         if (roleProp != null)
         {
@@ -105,7 +103,7 @@ public class TokenService : ITokenService
             ValidateIssuer = false,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-            ValidateLifetime = false // Don't validate lifetime here since we're specifically handling expired tokens
+            ValidateLifetime = false
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -122,11 +120,11 @@ public class TokenService : ITokenService
 
     public DateTime GetRefreshTokenExpiryDate()
     {
-        return DateTime.UtcNow.AddDays(7); // 7-day expiry
+        return DateTime.UtcNow.AddDays(7); 
     }
 
     public DateTime GetPasswordResetTokenExpiryDate()
     {
-        return DateTime.UtcNow.AddHours(1); // 1-hour expiry for password reset
+        return DateTime.UtcNow.AddHours(1); 
     }
 }
