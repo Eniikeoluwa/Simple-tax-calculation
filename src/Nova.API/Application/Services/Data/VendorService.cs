@@ -57,10 +57,13 @@ public class VendorService : BaseDataService, IVendorService
             if (!string.IsNullOrEmpty(request.BankName))
             {
                 // Create or find bank using the provided bank details
-                var bankResult = await _bankService.FindOrCreateBankAsync(
-                    request.BankName, 
-                    request.BankSortCode, 
-                    request.BankCode);
+                var bankCreateRequest = new Nova.Contracts.Models.CreateBankRequest
+                {
+                    Name = request.BankName,
+                    SortCode = request.BankSortCode,
+                    Code = request.BankCode
+                };
+                var bankResult = await _bankService.FindOrCreateBankAsync(bankCreateRequest);
                 
                 if (bankResult.IsFailed)
                     return Result.Fail($"Failed to create or find bank: {string.Join(", ", bankResult.Errors.Select(e => e.Message))}");
