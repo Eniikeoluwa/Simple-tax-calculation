@@ -224,13 +224,11 @@ public class AuthService : BaseDataService, IAuthService
 
     public async Task<string> HashPassword(string password)
     {
-        // Simulate async, or use Task.Run for CPU-bound
         return await Task.Run(() => BCrypt.Net.BCrypt.HashPassword(password));
     }
 
     public async Task<bool> VerifyPassword(string password, string hashedPassword)
     {
-        // Simulate async, or use Task.Run for CPU-bound
         return await Task.Run(() => BCrypt.Net.BCrypt.Verify(password, hashedPassword));
     }
 
