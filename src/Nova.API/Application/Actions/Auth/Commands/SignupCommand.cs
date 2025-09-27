@@ -22,7 +22,6 @@ namespace Nova.API.Application.Actions.Auth.Commands
 
         public async Task<Result<AuthResponse>> Handle(SignupCommand command, CancellationToken cancellationToken)
         {
-            // Validate that the tenant exists and is active
             var tenantResult = await _tenantService.GetTenantByIdAsync(command.request.TenantId);
             if (tenantResult.IsFailed)
                 return Result.Fail("Selected company/tenant not found");
