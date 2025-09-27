@@ -20,35 +20,12 @@ public class UpdateBankCommandHandler : IRequestHandler<UpdateBankCommand, Resul
 
     public async Task<Result<BankResponse>> Handle(UpdateBankCommand request, CancellationToken cancellationToken)
     {
-        // First, get the existing bank
-        var existingBankResult = await _bankService.GetBankByIdAsync(request.request.Id);
-        if (existingBankResult.IsFailed)
-            return Result.Fail(existingBankResult.Errors);
-
-        var existingBank = existingBankResult.Value;
-
-        // Update the bank properties
-        var updatedBank = new Nova.Domain.Entities.Bank
-        {
-            Id = existingBank.Id,
-            Name = request.request.Name,
-            SortCode = request.request.SortCode,
-            Code = request.request.Code,
-            IsActive = request.request.IsActive,
-            CreatedAt = existingBank.CreatedAt,
-            CreatedBy = existingBank.CreatedBy
-        };
-
-        var updateResult = await _bankService.UpdateBankAsync(updatedBank);
+        // Delegate update logic to the service - handler should not construct or manipulate domain entities
+        var updateResult = await _bankService.UpdateBankAsync(request.request);
         if (updateResult.IsFailed)
             return Result.Fail(updateResult.Errors);
 
-        // Get the updated bank to return in response
-        var updatedBankResult = await _bankService.GetBankByIdAsync(request.request.Id);
-        if (updatedBankResult.IsFailed)
-            return Result.Fail(updatedBankResult.Errors);
-
-        var bank = updatedBankResult.Value;
+        var bank = updateResult.Value;
 
         var response = new BankResponse
         {
