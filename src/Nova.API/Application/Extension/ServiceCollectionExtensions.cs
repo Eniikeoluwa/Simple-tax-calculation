@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
     services.AddScoped<IBankService, BankService>();
     services.AddScoped<IVendorService, VendorService>();
     services.AddScoped<IUserService, UserService>();
+    services.AddScoped<IPaymentService, PaymentService>();
 
     // FluentValidation validators
     services.AddValidatorsFromAssembly(typeof(Program).Assembly);
