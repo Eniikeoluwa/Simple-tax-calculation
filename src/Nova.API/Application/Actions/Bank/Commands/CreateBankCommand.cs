@@ -19,10 +19,7 @@ public class CreateBankCommandHandler : IRequestHandler<CreateBankCommand, Resul
 
     public async Task<Result<BankResponse>> Handle(CreateBankCommand request, CancellationToken cancellationToken)
     {
-        var bankResult = await _bankService.CreateBankAsync(
-            request.request.Name,
-            request.request.SortCode,
-            request.request.Code);
+        var bankResult = await _bankService.CreateBankAsync(request.request);
 
         if (bankResult.IsFailed)
             return Result.Fail(bankResult.Errors);
