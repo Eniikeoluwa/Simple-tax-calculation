@@ -50,7 +50,17 @@ public class CreatePaymentCommandHandler : MediatR.IRequestHandler<CreatePayment
             CreatedByUserId = payment.CreatedByUserId,
             ApprovedByUserId = payment.ApprovedByUserId,
             CreatedAt = payment.CreatedAt,
-            UpdatedAt = payment.UpdatedAt
+            UpdatedAt = payment.UpdatedAt,
+            
+            // Two-payment system fields
+            OriginalInvoiceAmount = payment.OriginalInvoiceAmount,
+            PaymentAmount = payment.PaymentAmount,
+            PaymentPercentage = payment.OriginalInvoiceAmount > 0 ? (payment.PaymentAmount / payment.OriginalInvoiceAmount * 100) : 0,
+            IsPartialPayment = payment.IsPartialPayment,
+            IsFinalPayment = payment.IsFinalPayment,
+            FirstPaymentId = payment.ParentPaymentId ?? string.Empty,
+            TotalAmountPaid = payment.TotalAmountPaid,
+            RemainingBalance = payment.GetRemainingBalance()
         };
 
         if (payment.Vendor != null)
@@ -92,7 +102,8 @@ public class CreatePaymentCommandValidator : AbstractValidator<CreatePaymentComm
 
         RuleFor(x => x.request.GrossAmount)
             .GreaterThan(0)
-            .WithMessage("Gross amount must be greater than 0");
+            .When(x => !x.request.IsPartialPayment)
+            .WithMessage("Gross amount must be greater than 0 for full payments");
 
         RuleFor(x => x.request.Description)
             .NotEmpty()
@@ -119,5 +130,21 @@ public class CreatePaymentCommandValidator : AbstractValidator<CreatePaymentComm
         RuleFor(x => x.request.Remarks)
             .MaximumLength(1000)
             .WithMessage("Remarks must not exceed 1000 characters");
+
+        // Two-payment system validation rules
+        RuleFor(x => x.request.PartialPercentage)
+            .Must(x => x == 50 || x == 70)
+            .When(x => x.request.IsPartialPayment && !x.request.IsFinalPayment)
+            .WithMessage("First partial payment must be either 50% or 70%");
+
+        RuleFor(x => x.request.PartialPercentage)
+            .Must(x => x == 30 || x == 50)
+            .When(x => x.request.IsPartialPayment && x.request.IsFinalPayment)
+            .WithMessage("Final payment must be either 30% or 50% (remaining amount)");
+
+        RuleFor(x => x.request.FirstPaymentId)
+            .NotEmpty()
+            .When(x => x.request.IsPartialPayment && x.request.IsFinalPayment)
+            .WithMessage("FirstPaymentId is required for final payments");
     }
 }
