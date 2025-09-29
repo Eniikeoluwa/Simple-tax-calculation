@@ -310,7 +310,28 @@ namespace Nova.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsFinalPayment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsPartialPayment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<decimal>("NetAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OriginalInvoiceAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ParentPaymentId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("PaymentAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("PaymentDate")
@@ -332,6 +353,9 @@ namespace Nova.Infrastructure.Migrations
 
                     b.Property<string>("TenantId")
                         .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("TotalAmountPaid")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -358,6 +382,8 @@ namespace Nova.Infrastructure.Migrations
                     b.HasIndex("BulkScheduleId");
 
                     b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("ParentPaymentId");
 
                     b.HasIndex("TenantId");
 
@@ -779,6 +805,12 @@ namespace Nova.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Nova.Domain.Entities.Payment", "ParentPayment")
+                        .WithMany("ChildPayments")
+                        .HasForeignKey("ParentPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Nova.Domain.Entities.Tenant", null)
                         .WithMany("Payments")
                         .HasForeignKey("TenantId");
@@ -794,6 +826,8 @@ namespace Nova.Infrastructure.Migrations
                     b.Navigation("BulkSchedule");
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("ParentPayment");
 
                     b.Navigation("Vendor");
                 });
@@ -864,6 +898,11 @@ namespace Nova.Infrastructure.Migrations
                     b.Navigation("GapsSchedules");
 
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("Nova.Domain.Entities.Payment", b =>
+                {
+                    b.Navigation("ChildPayments");
                 });
 
             modelBuilder.Entity("Nova.Domain.Entities.Tenant", b =>
