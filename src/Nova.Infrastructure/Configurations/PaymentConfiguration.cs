@@ -19,8 +19,23 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.Status).HasMaxLength(50);
         builder.Property(p => p.Reference).HasMaxLength(200);
 
+        // Partial payment fields
+        builder.Property(p => p.OriginalInvoiceAmount).HasColumnType("decimal(18,2)");
+        builder.Property(p => p.PaymentAmount).HasColumnType("decimal(18,2)");
+        builder.Property(p => p.TotalAmountPaid).HasColumnType("decimal(18,2)");
+        builder.Property(p => p.IsPartialPayment).HasDefaultValue(false);
+        builder.Property(p => p.IsFinalPayment).HasDefaultValue(false);
+        builder.Property(p => p.ParentPaymentId).HasMaxLength(50);
+
         builder.HasOne(p => p.Vendor).WithMany(v => v.Payments).HasForeignKey(p => p.VendorId);
         builder.HasOne(p => p.BulkSchedule).WithMany(b => b.Payments).HasForeignKey(p => p.BulkScheduleId);
+        
+        // Configure partial payment relationships
+        builder.HasOne(p => p.ParentPayment)
+            .WithMany(p => p.ChildPayments)
+            .HasForeignKey(p => p.ParentPaymentId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
         // explicitly configure user relations to avoid ambiguity when multiple navigations to User exist
         builder.HasOne(p => p.CreatedByUser)
             .WithMany(u => u.CreatedPayments)
