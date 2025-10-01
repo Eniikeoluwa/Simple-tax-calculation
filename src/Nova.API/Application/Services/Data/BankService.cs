@@ -18,11 +18,11 @@ public interface IBankService
 
 public class BankService : BaseDataService, IBankService
 {
-    private readonly string _userId;
+    private readonly ICurrentUserService _currentUserService;
 
-    public BankService(AppDbContext context) : base(context)
+    public BankService(AppDbContext context, ICurrentUserService currentUserService) : base(context)
     {
-        _userId = CurrentUser.UserId;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<Bank>> CreateBankAsync(CreateBankRequest request)
@@ -38,7 +38,7 @@ public class BankService : BaseDataService, IBankService
             if (existingBank != null)
                 return Result.Ok(existingBank);
 
-            var currentUser = _userId ?? "System";
+            var currentUser = _currentUserService.UserId ?? "System";
 
             var bank = new Bank
             {
@@ -137,7 +137,7 @@ public class BankService : BaseDataService, IBankService
             existingBank.Code = request.Code;
             existingBank.IsActive = request.IsActive;
             existingBank.UpdatedAt = DateTime.UtcNow;
-            existingBank.UpdatedBy = _userId ?? "System";
+            existingBank.UpdatedBy = _currentUserService.UserId ?? "System";
 
             await _context.SaveChangesAsync();
             return Result.Ok(existingBank);
