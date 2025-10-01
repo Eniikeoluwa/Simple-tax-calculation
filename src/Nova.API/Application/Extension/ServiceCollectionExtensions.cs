@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
 
     // Add custom services
+    services.AddScoped<ICurrentUserService, CurrentUserService>();
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<ITokenService, TokenService>();
     services.AddScoped<ITenantService, TenantService>();
