@@ -15,20 +15,18 @@ public interface IUserService
 
 public class UserService : BaseDataService, IUserService
 {
-    private readonly string _tenantId;
-    private readonly string _userId;
+    private readonly ICurrentUserService _currentUserService;
 
-    public UserService(AppDbContext context) : base(context)
+    public UserService(AppDbContext context, ICurrentUserService currentUserService) : base(context)
     {
-        _tenantId = CurrentUser.TenantId;
-        _userId = CurrentUser.UserId;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<List<User>>> GetUsersForCurrentTenantAsync()
     {
         try
         {
-            var tenantId = _tenantId;
+            var tenantId = _currentUserService.TenantId;
             if (string.IsNullOrEmpty(tenantId))
                 return Result.Fail("User is not associated with any tenant");
 
@@ -53,7 +51,7 @@ public class UserService : BaseDataService, IUserService
     {
         try
         {
-            var tenantId = _tenantId;
+            var tenantId = _currentUserService.TenantId;
             if (string.IsNullOrEmpty(tenantId))
                 return Result.Fail("User is not associated with any tenant");
 
