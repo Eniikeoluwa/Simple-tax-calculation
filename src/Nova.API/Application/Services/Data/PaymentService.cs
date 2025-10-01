@@ -18,27 +18,26 @@ public interface IPaymentService
 
 public class PaymentService : BaseDataService, IPaymentService
 {
-    private readonly string _tenantId;
-    private readonly string _userId;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IVendorService _vendorService;
 
-    public PaymentService(AppDbContext context, IVendorService vendorService) : base(context)
+    public PaymentService(AppDbContext context, ICurrentUserService currentUserService, IVendorService vendorService) : base(context)
     {
-        _tenantId = CurrentUser.TenantId;
-        _userId = CurrentUser.UserId;
+        _currentUserService = currentUserService;
         _vendorService = vendorService;
     }
+
+    private string TenantId => _currentUserService.TenantId;
+    private string UserId => _currentUserService.UserId;
 
     public async Task<Result<Payment>> CreatePaymentAsync(CreatePaymentRequest request)
     {
         try
         {
-            var tenantId = _tenantId;
-            if (string.IsNullOrEmpty(tenantId))
+            if (string.IsNullOrEmpty(TenantId))
                 return Result.Fail("User is not associated with any tenant");
 
-            var currentUser = _userId;
-            if (string.IsNullOrEmpty(currentUser))
+            if (string.IsNullOrEmpty(UserId))
                 return Result.Fail("User not authenticated");
 
             var vendorResult = await _vendorService.GetVendorByIdAsync(request.VendorId);
@@ -46,21 +45,21 @@ public class PaymentService : BaseDataService, IPaymentService
                 return Result.Fail($"Vendor not found: {request.VendorId}");
 
             var vendor = vendorResult.Value;
-            if (vendor.TenantId != tenantId)
+            if (vendor.TenantId != TenantId)
                 return Result.Fail("Vendor does not belong to your tenant");
 
             Payment payment;
 
             if (request.IsPartialPayment)
             {
-                var partialPaymentResult = await CreatePartialPaymentAsync(request, vendor, currentUser);
+                var partialPaymentResult = await CreatePartialPaymentAsync(request, vendor, UserId);
                 if (partialPaymentResult.IsFailed)
                     return partialPaymentResult;
                 payment = partialPaymentResult.Value;
             }
             else
             {
-                payment = await CreateFullPaymentAsync(request, vendor, currentUser, tenantId);
+                payment = await CreateFullPaymentAsync(request, vendor, UserId, TenantId);
             }
 
             _context.Payments.Add(payment);
@@ -96,7 +95,7 @@ public class PaymentService : BaseDataService, IPaymentService
             // Check for duplicate invoice numbers
             var existingPayment = await _context.Payments
                 .FirstOrDefaultAsync(p => p.InvoiceNumber.ToLower() == request.InvoiceNumber.ToLower()
-                                    && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == _tenantId));
+                                    && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
 
             if (existingPayment != null)
                 return Result.Fail($"A payment with invoice number '{request.InvoiceNumber}' already exists");
@@ -183,7 +182,7 @@ public class PaymentService : BaseDataService, IPaymentService
         // Check if invoice number already exists for this tenant
         var existingPayment = await _context.Payments
             .FirstOrDefaultAsync(p => p.InvoiceNumber.ToLower() == request.InvoiceNumber.ToLower()
-                                && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == tenantId));
+                                && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
 
         if (existingPayment != null)
             throw new InvalidOperationException($"A payment with invoice number '{request.InvoiceNumber}' already exists");
@@ -221,15 +220,14 @@ public class PaymentService : BaseDataService, IPaymentService
     {
         try
         {
-            var tenantId = _tenantId;
-            if (string.IsNullOrEmpty(tenantId))
+            if (string.IsNullOrEmpty(TenantId))
                 return Result.Fail("User is not associated with any tenant");
 
             var payments = await _context.Payments
                 .Include(p => p.Vendor)
                 .Include(p => p.CreatedByUser)
                 .Include(p => p.ApprovedByUser)
-                .Where(p => p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == tenantId))
+                .Where(p => p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId))
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -245,8 +243,7 @@ public class PaymentService : BaseDataService, IPaymentService
     {
         try
         {
-            var tenantId = _tenantId;
-            if (string.IsNullOrEmpty(tenantId))
+            if (string.IsNullOrEmpty(TenantId))
                 return Result.Fail("User is not associated with any tenant");
 
             var payment = await _context.Payments
@@ -254,7 +251,7 @@ public class PaymentService : BaseDataService, IPaymentService
                 .Include(p => p.CreatedByUser)
                 .Include(p => p.ApprovedByUser)
                 .FirstOrDefaultAsync(p => p.Id == paymentId
-                                    && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == tenantId));
+                                    && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
 
             if (payment == null)
                 return Result.Fail("Payment not found or you don't have access to it");
@@ -271,13 +268,10 @@ public class PaymentService : BaseDataService, IPaymentService
     {
         try
         {
-            var tenantId = _tenantId;
-            var currentUser = _userId;
-
-            if (string.IsNullOrEmpty(tenantId))
+            if (string.IsNullOrEmpty(TenantId))
                 return Result.Fail("User is not associated with any tenant");
 
-            if (string.IsNullOrEmpty(currentUser))
+            if (string.IsNullOrEmpty(UserId))
                 return Result.Fail("User not authenticated");
 
             var paymentResult = await GetPaymentByIdAsync(paymentId);
@@ -299,7 +293,7 @@ public class PaymentService : BaseDataService, IPaymentService
             // Set approved by user if status is approved
             if (request.Status == "Approved" && string.IsNullOrEmpty(payment.ApprovedByUserId))
             {
-                payment.ApprovedByUserId = currentUser;
+                payment.ApprovedByUserId = UserId;
             }
 
             await SaveChangesAsync();
