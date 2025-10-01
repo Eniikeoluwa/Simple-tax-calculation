@@ -18,14 +18,12 @@ public interface IVendorService
 
 public class VendorService : BaseDataService, IVendorService
 {
-    private readonly string _tenantId;
-    private readonly string _userId;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IBankService _bankService;
 
-    public VendorService(AppDbContext context, IBankService bankService) : base(context)
+    public VendorService(AppDbContext context, ICurrentUserService currentUserService, IBankService bankService) : base(context)
     {
-        _tenantId = CurrentUser.TenantId;
-        _userId = CurrentUser.UserId;
+        _currentUserService = currentUserService;
         _bankService = bankService;
     }
 
@@ -33,11 +31,11 @@ public class VendorService : BaseDataService, IVendorService
     {
         try
         {
-            var tenantId = _tenantId;
+            var tenantId = _currentUserService.TenantId;
             if (string.IsNullOrEmpty(tenantId))
                 return Result.Fail("User is not associated with any tenant");
 
-            var currentUser = _userId;
+            var currentUser = _currentUserService.UserId;
 
             // Check if vendor with same name exists in the tenant
             var existingVendor = await _context.Vendors
@@ -117,7 +115,7 @@ public class VendorService : BaseDataService, IVendorService
     {
         try
         {
-            var tenantId = _tenantId;
+            var tenantId = _currentUserService.TenantId;
             if (string.IsNullOrEmpty(tenantId))
                 return Result.Fail("User is not associated with any tenant");
 
@@ -140,7 +138,7 @@ public class VendorService : BaseDataService, IVendorService
     {
         try
         {
-            var tenantId = _tenantId;
+            var tenantId = _currentUserService.TenantId;
             if (string.IsNullOrEmpty(tenantId))
                 return Result.Fail("User is not associated with any tenant");
 
@@ -169,7 +167,8 @@ public class VendorService : BaseDataService, IVendorService
                 return Result.Fail("Vendor not found");
 
             // Ensure vendor belongs to current tenant
-            if (!string.IsNullOrEmpty(_tenantId) && existingVendor.TenantId != _tenantId)
+            var tenantId = _currentUserService.TenantId;
+            if (!string.IsNullOrEmpty(tenantId) && existingVendor.TenantId != tenantId)
                 return Result.Fail("Vendor not found in current tenant");
 
             // Update properties
@@ -187,7 +186,7 @@ public class VendorService : BaseDataService, IVendorService
             existingVendor.BankId = vendor.BankId;
             existingVendor.IsActive = vendor.IsActive;
             existingVendor.UpdatedAt = DateTime.UtcNow;
-            existingVendor.UpdatedBy = _userId;
+            existingVendor.UpdatedBy = _currentUserService.UserId;
 
             await _context.SaveChangesAsync();
             return Result.Ok(true);
@@ -206,12 +205,13 @@ public class VendorService : BaseDataService, IVendorService
             if (vendor == null)
                 return Result.Fail("Vendor not found");
 
-            if (!string.IsNullOrEmpty(_tenantId) && vendor.TenantId != _tenantId)
+            var tenantId = _currentUserService.TenantId;
+            if (!string.IsNullOrEmpty(tenantId) && vendor.TenantId != tenantId)
                 return Result.Fail("Vendor not found in current tenant");
 
             vendor.IsActive = false;
             vendor.UpdatedAt = DateTime.UtcNow;
-            vendor.UpdatedBy = _userId;
+            vendor.UpdatedBy = _currentUserService.UserId;
 
             _context.Vendors.Update(vendor);
             await _context.SaveChangesAsync();
