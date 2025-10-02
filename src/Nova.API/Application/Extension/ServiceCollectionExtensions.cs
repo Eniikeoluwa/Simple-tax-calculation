@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
     services.AddScoped<IVendorService, VendorService>();
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<IPaymentService, PaymentService>();
+    services.AddScoped<IBulkScheduleService, BulkScheduleService>();
 
     // FluentValidation validators
     services.AddValidatorsFromAssembly(typeof(Program).Assembly);
