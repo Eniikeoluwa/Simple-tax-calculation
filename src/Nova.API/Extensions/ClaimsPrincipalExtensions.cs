@@ -7,22 +7,26 @@ public static class ClaimsPrincipalExtensions
 {
     public static string? GetUserId(this ClaimsPrincipal principal)
     {
-        return principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        return principal.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+               ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
     }
 
     public static string? GetEmail(this ClaimsPrincipal principal)
     {
-        return principal.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+        return principal.FindFirst(ClaimTypes.Email)?.Value 
+               ?? principal.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
     }
 
     public static string? GetFirstName(this ClaimsPrincipal principal)
     {
-        return principal.FindFirst(JwtRegisteredClaimNames.GivenName)?.Value;
+        return principal.FindFirst(ClaimTypes.GivenName)?.Value 
+               ?? principal.FindFirst(JwtRegisteredClaimNames.GivenName)?.Value;
     }
 
     public static string? GetLastName(this ClaimsPrincipal principal)
     {
-        return principal.FindFirst(JwtRegisteredClaimNames.FamilyName)?.Value;
+        return principal.FindFirst(ClaimTypes.Surname)?.Value 
+               ?? principal.FindFirst(JwtRegisteredClaimNames.FamilyName)?.Value;
     }
 
     public static string? GetPrimaryTenantId(this ClaimsPrincipal principal)
