@@ -1,6 +1,7 @@
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
 using Nova.API.Application.Services.Common;
+using Nova.API.Application.Helpers;
 using Nova.Domain.Entities;
 using Nova.Infrastructure;
 using Nova.Contracts.Models;
@@ -105,8 +106,8 @@ public class PaymentService : BaseDataService, IPaymentService
                 InvoiceNumber = request.InvoiceNumber,
                 Description = request.Description,
                 Reference = request.Reference,
-                InvoiceDate = request.InvoiceDate,
-                DueDate = request.DueDate,
+                InvoiceDate = DateTimeHelper.EnsureUtc(request.InvoiceDate),
+                DueDate = DateTimeHelper.EnsureUtc(request.DueDate),
                 Remarks = request.Remarks,
                 VendorId = request.VendorId,
                 CreatedByUserId = currentUser,
@@ -150,8 +151,8 @@ public class PaymentService : BaseDataService, IPaymentService
                 InvoiceNumber = request.InvoiceNumber + "-FINAL",
                 Description = request.Description,
                 Reference = request.Reference,
-                InvoiceDate = request.InvoiceDate,
-                DueDate = request.DueDate,
+                InvoiceDate = DateTimeHelper.EnsureUtc(request.InvoiceDate),
+                DueDate = DateTimeHelper.EnsureUtc(request.DueDate),
                 Remarks = request.Remarks,
                 VendorId = request.VendorId,
                 CreatedByUserId = currentUser,
@@ -193,8 +194,8 @@ public class PaymentService : BaseDataService, IPaymentService
             GrossAmount = request.GrossAmount,
             Description = request.Description,
             Reference = request.Reference,
-            InvoiceDate = request.InvoiceDate,
-            DueDate = request.DueDate,
+            InvoiceDate = DateTimeHelper.EnsureUtc(request.InvoiceDate),
+            DueDate = DateTimeHelper.EnsureUtc(request.DueDate),
             Remarks = request.Remarks,
             VendorId = request.VendorId,
             CreatedByUserId = currentUser,
@@ -288,7 +289,7 @@ public class PaymentService : BaseDataService, IPaymentService
             // Update payment status
             payment.Status = request.Status;
             payment.Remarks = request.Remarks ?? payment.Remarks;
-            payment.PaymentDate = request.PaymentDate ?? payment.PaymentDate;
+            payment.PaymentDate = DateTimeHelper.EnsureUtc(request.PaymentDate) ?? payment.PaymentDate;
 
             // Set approved by user if status is approved
             if (request.Status == "Approved" && string.IsNullOrEmpty(payment.ApprovedByUserId))
