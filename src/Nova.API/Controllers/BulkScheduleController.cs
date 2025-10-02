@@ -1,0 +1,83 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Nova.API.Application.Actions.BulkSchedule.Commands;
+using Nova.API.Application.Actions.BulkSchedule.Queries;
+using Nova.API.Controllers;
+using Nova.Contracts.Models;
+using MediatR;
+
+namespace Nova.API.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class BulkScheduleController : BaseController
+{
+    public BulkScheduleController(IMediator mediator) : base(mediator)
+    {
+    }
+    [HttpPost("generate")]
+    public async Task<ActionResult<BulkScheduleResponse>> GenerateBulkSchedule(
+        [FromBody] CreateBulkScheduleRequest request)
+    {
+        var command = new GenerateBulkScheduleCommand(request);
+        return await SendCommand<GenerateBulkScheduleCommand, BulkScheduleResponse>(command);
+    }
+
+    [HttpGet("list")]
+    public async Task<ActionResult<List<BulkScheduleListResponse>>> GetBulkSchedules()
+    {
+        var query = new GetBulkSchedulesQuery();
+        return await SendQuery<GetBulkSchedulesQuery, List<BulkScheduleListResponse>>(query);
+    }
+
+    [HttpGet("{bulkScheduleId}")]
+    public async Task<ActionResult<BulkScheduleResponse>> GetBulkScheduleById(string bulkScheduleId)
+    {
+        var query = new GetBulkScheduleByIdQuery(bulkScheduleId);
+        return await SendQuery<GetBulkScheduleByIdQuery, BulkScheduleResponse>(query);
+    }
+
+    [HttpPut("{bulkScheduleId}/status")]
+    public async Task<ActionResult<bool>> UpdateBulkScheduleStatus(
+        string bulkScheduleId,
+        [FromBody] UpdateBulkScheduleStatusRequest request)
+    {
+        var command = new UpdateBulkScheduleStatusCommand(bulkScheduleId, request);
+        return await SendCommand<UpdateBulkScheduleStatusCommand, bool>(command);
+    }
+
+    [HttpDelete("{bulkScheduleId}")]
+    public async Task<ActionResult<bool>> DeleteBulkSchedule(string bulkScheduleId)
+    {
+        var command = new DeleteBulkScheduleCommand(bulkScheduleId);
+        return await SendCommand<DeleteBulkScheduleCommand, bool>(command);
+    }
+
+    [HttpGet("{bulkScheduleId}/export/csv")]
+    public async Task<IActionResult> ExportBulkScheduleToCsv(string bulkScheduleId)
+    {
+        var query = new ExportBulkScheduleToCsvQuery(bulkScheduleId);
+        var result = await SendQuery<ExportBulkScheduleToCsvQuery, byte[]>(query);
+        
+        if (result.Result is OkObjectResult okResult && okResult.Value is byte[] csvData)
+        {
+            var bulkScheduleQuery = new GetBulkScheduleByIdQuery(bulkScheduleId);
+            var bulkScheduleResult = await SendQuery<GetBulkScheduleByIdQuery, BulkScheduleResponse>(bulkScheduleQuery);
+            
+            var fileName = "BulkSchedule_Export.csv";
+            if (bulkScheduleResult.Result is OkObjectResult bulkScheduleOk && bulkScheduleOk.Value is BulkScheduleResponse bulkSchedule)
+            {
+                fileName = $"BulkSchedule_{bulkSchedule.BatchNumber}_{DateTime.UtcNow:yyyyMMdd}.csv";
+            }
+            else
+            {
+                fileName = $"BulkSchedule_{bulkScheduleId}_{DateTime.UtcNow:yyyyMMdd}.csv";
+            }
+
+            return File(csvData, "text/csv", fileName);
+        }
+
+        return result.Result ?? BadRequest("Failed to export bulk schedule");
+    }
+}
