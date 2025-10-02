@@ -274,7 +274,6 @@ namespace Nova.Infrastructure.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("BulkScheduleId")
-                        .IsRequired()
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -795,9 +794,7 @@ namespace Nova.Infrastructure.Migrations
 
                     b.HasOne("Nova.Domain.Entities.BulkSchedule", "BulkSchedule")
                         .WithMany("Payments")
-                        .HasForeignKey("BulkScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BulkScheduleId");
 
                     b.HasOne("Nova.Domain.Entities.User", "CreatedByUser")
                         .WithMany("CreatedPayments")
