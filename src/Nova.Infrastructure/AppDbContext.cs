@@ -33,4 +33,24 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new Configurations.VendorConfiguration());
         base.OnModelCreating(modelBuilder);
     }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        // Ensure all DateTime properties are UTC before saving
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            foreach (var property in entry.Properties)
+            {
+                if (property.Metadata.ClrType == typeof(DateTime) || property.Metadata.ClrType == typeof(DateTime?))
+                {
+                    if (property.CurrentValue is DateTime dateTime && dateTime.Kind != DateTimeKind.Utc)
+                    {
+                        property.CurrentValue = DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+                    }
+                }
+            }
+        }
+        
+        return await base.SaveChangesAsync(cancellationToken);
+    }
 }
