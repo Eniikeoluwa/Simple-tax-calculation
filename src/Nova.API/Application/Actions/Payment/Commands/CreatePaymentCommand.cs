@@ -41,7 +41,6 @@ public class CreatePaymentCommandHandler : MediatR.IRequestHandler<CreatePayment
             AppliedVatRate = payment.AppliedVatRate,
             AppliedWhtRate = payment.AppliedWhtRate,
             InvoiceDate = payment.InvoiceDate,
-            DueDate = payment.DueDate,
             PaymentDate = payment.PaymentDate,
             Status = payment.Status,
             Remarks = payment.Remarks,
@@ -117,11 +116,6 @@ public class CreatePaymentCommandValidator : AbstractValidator<CreatePaymentComm
         RuleFor(x => x.request.InvoiceDate)
             .NotEmpty()
             .WithMessage("Invoice date is required");
-
-        RuleFor(x => x.request.DueDate)
-            .GreaterThanOrEqualTo(x => x.request.InvoiceDate)
-            .When(x => x.request.DueDate.HasValue)
-            .WithMessage("Due date must be equal to or after invoice date");
 
         RuleFor(x => x.request.VendorId)
             .NotEmpty()
