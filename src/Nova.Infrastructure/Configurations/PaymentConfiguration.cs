@@ -28,7 +28,8 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.ParentPaymentId).HasMaxLength(50);
 
         builder.HasOne(p => p.Vendor).WithMany(v => v.Payments).HasForeignKey(p => p.VendorId);
-        builder.HasOne(p => p.BulkSchedule).WithMany(b => b.Payments).HasForeignKey(p => p.BulkScheduleId);
+        builder.HasOne(p => p.BulkSchedule).WithMany(b => b.Payments).HasForeignKey(p => p.BulkScheduleId)
+            .IsRequired(false);
         
         // Configure partial payment relationships
         builder.HasOne(p => p.ParentPayment)
