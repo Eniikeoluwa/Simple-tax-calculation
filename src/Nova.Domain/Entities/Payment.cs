@@ -18,7 +18,7 @@ public class Payment : BaseEntity
     public string Status { get; set; } 
     public string Remarks { get; set; }
     public string VendorId { get; set; }
-    public string BulkScheduleId { get; set; }
+    public string? BulkScheduleId { get; set; }
     public string CreatedByUserId { get; set; }
     public string ApprovedByUserId { get; set; }
     public decimal OriginalInvoiceAmount { get; set; } 
