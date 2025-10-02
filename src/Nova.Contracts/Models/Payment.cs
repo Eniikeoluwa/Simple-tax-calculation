@@ -37,7 +37,7 @@ public class PaymentResponse
     public string Status { get; set; } = string.Empty;
     public string Remarks { get; set; } = string.Empty;
     public string VendorId { get; set; } = string.Empty;
-    public string BulkScheduleId { get; set; } = string.Empty;
+    public string? BulkScheduleId { get; set; }
     public string CreatedByUserId { get; set; } = string.Empty;
     public string ApprovedByUserId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
