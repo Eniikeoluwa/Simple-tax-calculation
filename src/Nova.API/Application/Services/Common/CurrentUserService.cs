@@ -19,22 +19,8 @@ public class CurrentUserService : ICurrentUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public string TenantId
-    {
-        get
-        {
-            var user = _httpContextAccessor?.HttpContext?.User;
-            if (user == null) return "";
-            
-            // Debug: Log all claims
-            foreach (var claim in user.Claims)
-            {
-                Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
-            }
-            
-            return user.GetPrimaryTenantId() ?? "";
-        }
-    }
+    public string TenantId =>
+        _httpContextAccessor?.HttpContext?.User?.GetPrimaryTenantId() ?? "";
     
     public string UserId =>
         _httpContextAccessor?.HttpContext?.User?.GetUserId() ?? "";
