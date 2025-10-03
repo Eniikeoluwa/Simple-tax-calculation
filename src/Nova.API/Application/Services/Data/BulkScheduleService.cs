@@ -45,22 +45,25 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (request.StartDate > request.EndDate)
                 return Result.Fail("Start date cannot be later than end date");
 
-            // Get all approved payments in the date range for the current tenant
+            // Get all approved payments created in the date range for the current tenant
+            var startDateUtc = DateTimeHelper.EnsureUtc(request.StartDate);
+            var endDateUtc = DateTimeHelper.EnsureUtc(request.EndDate).AddDays(1).AddTicks(-1); // Include full end date
+            
             var payments = await _context.Payments
                 .Include(p => p.Vendor)
                 .ThenInclude(v => v.Bank)
                 .Include(p => p.CreatedByUser)
                 .Where(p => p.TenantId == TenantId
                          && p.Status.ToLower() == "approved"
-                         && p.InvoiceDate >= DateTimeHelper.EnsureUtc(request.StartDate)
-                         && p.InvoiceDate <= DateTimeHelper.EnsureUtc(request.EndDate)
+                         && p.CreatedAt >= startDateUtc
+                         && p.CreatedAt <= endDateUtc
                          && p.BulkScheduleId == null) // Only include payments not already in a bulk schedule
                 .OrderBy(p => p.Vendor.Name)
-                .ThenBy(p => p.InvoiceDate)
+                .ThenBy(p => p.CreatedAt)
                 .ToListAsync();
 
             if (!payments.Any())
-                return Result.Fail($"No approved payments found for the specified date range ({request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd})");
+                return Result.Fail($"No approved payments found created between {request.StartDate:yyyy-MM-dd} and {request.EndDate:yyyy-MM-dd}");
 
             // Calculate totals
             var totalGrossAmount = payments.Sum(p => p.GrossAmount);
@@ -75,7 +78,7 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             var bulkSchedule = new BulkSchedule
             {
                 BatchNumber = batchNumber,
-                Description = request.Description ?? $"Bulk Schedule for {request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}",
+                Description = request.Description ?? $"Bulk Schedule - Payments created from {request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}",
                 TotalGrossAmount = totalGrossAmount,
                 TotalVatAmount = totalVatAmount,
                 TotalWhtAmount = totalWhtAmount,
