@@ -14,6 +14,7 @@ public interface IPaymentService
     Task<Result<List<Payment>>> GetPaymentsForCurrentTenantAsync();
     Task<Result<Payment>> GetPaymentByIdAsync(string paymentId);
     Task<Result<bool>> UpdatePaymentStatusAsync(string paymentId, UpdatePaymentStatusRequest request);
+    Task<Result<bool>> ApprovePaymentAsync(string paymentId, ApprovePaymentRequest request);
     Task<Result<bool>> DeletePaymentAsync(string paymentId);
 }
 
@@ -96,7 +97,7 @@ public class PaymentService : BaseDataService, IPaymentService
             // Check for duplicate invoice numbers
             var existingPayment = await _context.Payments
                 .FirstOrDefaultAsync(p => p.InvoiceNumber.ToLower() == request.InvoiceNumber.ToLower()
-                                    && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
+                                    && p.TenantId == TenantId);
 
             if (existingPayment != null)
                 return Result.Fail($"A payment with invoice number '{request.InvoiceNumber}' already exists");
@@ -189,7 +190,7 @@ public class PaymentService : BaseDataService, IPaymentService
         // Check if invoice number already exists for this tenant
         var existingPayment = await _context.Payments
             .FirstOrDefaultAsync(p => p.InvoiceNumber.ToLower() == request.InvoiceNumber.ToLower()
-                                && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
+                                && p.TenantId == TenantId);
 
         if (existingPayment != null)
             throw new InvalidOperationException($"A payment with invoice number '{request.InvoiceNumber}' already exists");
@@ -237,7 +238,7 @@ public class PaymentService : BaseDataService, IPaymentService
                 .Include(p => p.Vendor)
                 .Include(p => p.CreatedByUser)
                 .Include(p => p.ApprovedByUser)
-                .Where(p => p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId))
+                .Where(p => p.TenantId == TenantId)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -261,7 +262,7 @@ public class PaymentService : BaseDataService, IPaymentService
                 .Include(p => p.CreatedByUser)
                 .Include(p => p.ApprovedByUser)
                 .FirstOrDefaultAsync(p => p.Id == paymentId
-                                    && p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
+                                    && p.TenantId == TenantId);
 
             if (payment == null)
                 return Result.Fail("Payment not found or you don't have access to it");
@@ -314,6 +315,42 @@ public class PaymentService : BaseDataService, IPaymentService
         catch (Exception ex)
         {
             return Result.Fail($"An error occurred while updating payment status: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<bool>> ApprovePaymentAsync(string paymentId, ApprovePaymentRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(TenantId))
+                return Result.Fail("User is not associated with any tenant");
+
+            if (string.IsNullOrEmpty(UserId))
+                return Result.Fail("User not authenticated");
+
+            var paymentResult = await GetPaymentByIdAsync(paymentId);
+            if (paymentResult.IsFailed)
+                return Result.Fail(paymentResult.Errors);
+
+            var payment = paymentResult.Value;
+
+            // Check if payment is in pending status
+            if (payment.Status != "Pending")
+                return Result.Fail($"Payment cannot be approved. Current status: {payment.Status}. Only pending payments can be approved.");
+
+            // Update payment to approved status
+            payment.Status = "Approved";
+            payment.Remarks = request.Remarks ?? payment.Remarks;
+            payment.ApprovedByUserId = UserId;
+            payment.UpdatedBy = UserId;
+            payment.UpdatedAt = DateTime.UtcNow;
+
+            await SaveChangesAsync();
+            return Result.Ok(true);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"An error occurred while approving payment: {ex.Message}");
         }
     }
 
