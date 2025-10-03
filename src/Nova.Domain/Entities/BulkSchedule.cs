@@ -14,10 +14,10 @@ public class BulkSchedule : BaseEntity
     public string Status { get; set; } // Draft, Ready, Processed, Completed, Cancelled
     public string Remarks { get; set; } = null!;
     public string CreatedByUserId { get; set; } = null!;
-    public string ProcessedByUserId { get; set; } = null!;
+    public string? ProcessedByUserId { get; set; }
 
     public virtual User CreatedByUser { get; set; } = null!;
-    public virtual User ProcessedByUser { get; set; } = null!;
+    public virtual User? ProcessedByUser { get; set; }
     public virtual ICollection<Payment> Payments { get; set; } = null!;
     public virtual ICollection<GapsSchedule> GapsSchedules { get; set; } = null!;
 
