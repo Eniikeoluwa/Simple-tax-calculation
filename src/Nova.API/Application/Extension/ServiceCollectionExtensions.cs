@@ -4,11 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Nova.API.Application.Services.Common;
 using Nova.API.Application.Services.Data;
-using Nova.API.Application.Actions.Auth.Commands;
-using Nova.API.Application.Actions.Tenant.Commands;
-using Nova.API.Application.Actions.Tenant.Queries;
-using Nova.API.Application.Actions.Vendor.Commands;
-using Nova.API.Application.Actions.Vendor.Queries;
 using Nova.Contracts.Models;
 using FluentValidation;
 
@@ -18,13 +13,9 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // Add MediatR
-    // Register MediatR handlers
     services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
-        // Register IHttpContextAccessor (required by CurrentUserService and for design-time activation)
         services.AddHttpContextAccessor();
 
-    // Add custom services
     services.AddScoped<ICurrentUserService, CurrentUserService>();
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<ITokenService, TokenService>();
@@ -35,7 +26,6 @@ public static class ServiceCollectionExtensions
     services.AddScoped<IPaymentService, PaymentService>();
     services.AddScoped<IBulkScheduleService, BulkScheduleService>();
 
-    // FluentValidation validators
     services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
         return services;
@@ -66,7 +56,6 @@ public static class ServiceCollectionExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                 ClockSkew = TimeSpan.Zero
             };
-            // Diagnostic events to surface authentication issues in logs
             options.Events = new JwtBearerEvents
             {
                 OnAuthenticationFailed = context =>
@@ -102,7 +91,6 @@ public static class ServiceCollectionExtensions
         {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "Nova API", Version = "v1" });
             
-            // Add JWT authentication to Swagger
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
