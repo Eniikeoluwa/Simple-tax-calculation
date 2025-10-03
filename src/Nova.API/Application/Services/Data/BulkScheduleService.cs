@@ -84,7 +84,9 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 ScheduledDate = DateTimeHelper.EnsureUtc(DateTime.Now),
                 Status = "Ready",
                 Remarks = request.Remarks ?? "",
-                CreatedByUserId = UserId
+                CreatedByUserId = UserId,
+                CreatedBy = UserId,
+                UpdatedBy = UserId
             };
 
             _context.BulkSchedules.Add(bulkSchedule);
@@ -94,6 +96,8 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             foreach (var payment in payments)
             {
                 payment.BulkScheduleId = bulkSchedule.Id;
+                payment.UpdatedBy = UserId;
+                payment.UpdatedAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
@@ -271,6 +275,8 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             // Update status
             bulkSchedule.Status = request.Status;
             bulkSchedule.Remarks = request.Remarks ?? bulkSchedule.Remarks;
+            bulkSchedule.UpdatedBy = UserId;
+            bulkSchedule.UpdatedAt = DateTime.UtcNow;
 
             if (request.Status == "Processed" && !bulkSchedule.ProcessedDate.HasValue)
             {
