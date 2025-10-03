@@ -25,8 +25,10 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.TotalAmountPaid).HasColumnType("decimal(18,2)");
         builder.Property(p => p.IsPartialPayment).HasDefaultValue(false);
         builder.Property(p => p.IsFinalPayment).HasDefaultValue(false);
-        builder.Property(p => p.ParentPaymentId).HasMaxLength(50);
+        builder.Property(p => p.ParentPaymentId).HasMaxLength(50).IsRequired(false);
 
+        builder.HasOne(p => p.Tenant).WithMany(t => t.Payments).HasForeignKey(p => p.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.Vendor).WithMany(v => v.Payments).HasForeignKey(p => p.VendorId);
         builder.HasOne(p => p.BulkSchedule).WithMany(b => b.Payments).HasForeignKey(p => p.BulkScheduleId)
             .IsRequired(false);
@@ -35,6 +37,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasOne(p => p.ParentPayment)
             .WithMany(p => p.ChildPayments)
             .HasForeignKey(p => p.ParentPaymentId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
         
         // explicitly configure user relations to avoid ambiguity when multiple navigations to User exist
