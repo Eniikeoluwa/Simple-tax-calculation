@@ -45,13 +45,13 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (request.StartDate > request.EndDate)
                 return Result.Fail("Start date cannot be later than end date");
 
-            // Get all approved/paid payments in the date range for the current tenant
+            // Get all approved payments in the date range for the current tenant
             var payments = await _context.Payments
                 .Include(p => p.Vendor)
                 .ThenInclude(v => v.Bank)
                 .Include(p => p.CreatedByUser)
-                .Where(p => p.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId)
-                         && p.Status.ToLower() == "approved" || p.Status.ToLower() == "paid"
+                .Where(p => p.TenantId == TenantId
+                         && p.Status.ToLower() == "approved"
                          && p.InvoiceDate >= DateTimeHelper.EnsureUtc(request.StartDate)
                          && p.InvoiceDate <= DateTimeHelper.EnsureUtc(request.EndDate)
                          && p.BulkScheduleId == null) // Only include payments not already in a bulk schedule
@@ -60,7 +60,7 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 .ToListAsync();
 
             if (!payments.Any())
-                return Result.Fail($"No approved or paid payments found for the specified date range ({request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd})");
+                return Result.Fail($"No approved payments found for the specified date range ({request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd})");
 
             // Calculate totals
             var totalGrossAmount = payments.Sum(p => p.GrossAmount);
