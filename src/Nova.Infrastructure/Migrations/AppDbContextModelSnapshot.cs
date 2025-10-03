@@ -105,7 +105,6 @@ namespace Nova.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("ProcessedByUserId")
-                        .IsRequired()
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("ProcessedDate")
@@ -747,9 +746,7 @@ namespace Nova.Infrastructure.Migrations
 
                     b.HasOne("Nova.Domain.Entities.User", "ProcessedByUser")
                         .WithMany()
-                        .HasForeignKey("ProcessedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProcessedByUserId");
 
                     b.Navigation("CreatedByUser");
 
