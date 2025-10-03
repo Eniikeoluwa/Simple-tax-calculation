@@ -19,15 +19,17 @@ public class Payment : BaseEntity
     public string Remarks { get; set; }
     public string VendorId { get; set; }
     public string? BulkScheduleId { get; set; }
+    public string TenantId { get; set; }
     public string CreatedByUserId { get; set; }
-    public string ApprovedByUserId { get; set; }
+    public string? ApprovedByUserId { get; set; }
     public decimal OriginalInvoiceAmount { get; set; } 
     public decimal PaymentAmount { get; set; } 
     public bool IsPartialPayment { get; set; } 
     public bool IsFinalPayment { get; set; } 
-    public string ParentPaymentId { get; set; } 
+    public string? ParentPaymentId { get; set; } 
     public decimal TotalAmountPaid { get; set; }
 
+    public virtual Tenant Tenant { get; set; }
     public virtual Vendor Vendor { get; set; }
     public virtual BulkSchedule BulkSchedule { get; set; }
     public virtual User CreatedByUser { get; set; }
