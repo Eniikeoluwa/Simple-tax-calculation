@@ -16,7 +16,7 @@ public class BulkScheduleController : BaseController
     public BulkScheduleController(IMediator mediator) : base(mediator)
     {
     }
-    [HttpPost("generate")]
+    [HttpPost("create")]
     public async Task<ActionResult<BulkScheduleResponse>> GenerateBulkSchedule(
         [FromBody] CreateBulkScheduleRequest request)
     {
@@ -38,7 +38,7 @@ public class BulkScheduleController : BaseController
         return await SendQuery<GetBulkScheduleByIdQuery, BulkScheduleResponse>(query);
     }
 
-    [HttpPut("{bulkScheduleId}/status")]
+    [HttpPatch("{bulkScheduleId}/status")]
     public async Task<ActionResult<bool>> UpdateBulkScheduleStatus(
         string bulkScheduleId,
         [FromBody] UpdateBulkScheduleStatusRequest request)
@@ -59,12 +59,12 @@ public class BulkScheduleController : BaseController
     {
         var query = new ExportBulkScheduleToCsvQuery(bulkScheduleId);
         var result = await SendQuery<ExportBulkScheduleToCsvQuery, byte[]>(query);
-        
+
         if (result.Result is OkObjectResult okResult && okResult.Value is byte[] csvData)
         {
             var bulkScheduleQuery = new GetBulkScheduleByIdQuery(bulkScheduleId);
             var bulkScheduleResult = await SendQuery<GetBulkScheduleByIdQuery, BulkScheduleResponse>(bulkScheduleQuery);
-            
+
             var fileName = "BulkSchedule_Export.csv";
             if (bulkScheduleResult.Result is OkObjectResult bulkScheduleOk && bulkScheduleOk.Value is BulkScheduleResponse bulkSchedule)
             {
