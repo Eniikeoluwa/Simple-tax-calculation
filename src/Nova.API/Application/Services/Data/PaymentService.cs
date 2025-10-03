@@ -110,7 +110,10 @@ public class PaymentService : BaseDataService, IPaymentService
                 DueDate = DateTimeHelper.EnsureUtc(request.DueDate),
                 Remarks = request.Remarks,
                 VendorId = request.VendorId,
+                TenantId = TenantId,
                 CreatedByUserId = currentUser,
+                CreatedBy = currentUser,
+                UpdatedBy = currentUser,
 
                 // Apply vendor's tax configuration
                 AppliedTaxType = vendor.TaxType,
@@ -155,7 +158,10 @@ public class PaymentService : BaseDataService, IPaymentService
                 DueDate = DateTimeHelper.EnsureUtc(request.DueDate),
                 Remarks = request.Remarks,
                 VendorId = request.VendorId,
+                TenantId = TenantId,
                 CreatedByUserId = currentUser,
+                CreatedBy = currentUser,
+                UpdatedBy = currentUser,
                 ParentPaymentId = request.FirstPaymentId,
 
                 // Apply vendor's tax configuration
@@ -198,7 +204,10 @@ public class PaymentService : BaseDataService, IPaymentService
             DueDate = DateTimeHelper.EnsureUtc(request.DueDate),
             Remarks = request.Remarks,
             VendorId = request.VendorId,
+            TenantId = tenantId,
             CreatedByUserId = currentUser,
+            CreatedBy = currentUser,
+            UpdatedBy = currentUser,
 
             // For full payments, set original amount to gross amount
             OriginalInvoiceAmount = request.GrossAmount,
@@ -290,6 +299,8 @@ public class PaymentService : BaseDataService, IPaymentService
             payment.Status = request.Status;
             payment.Remarks = request.Remarks ?? payment.Remarks;
             payment.PaymentDate = DateTimeHelper.EnsureUtc(request.PaymentDate) ?? payment.PaymentDate;
+            payment.UpdatedBy = UserId;
+            payment.UpdatedAt = DateTime.UtcNow;
 
             // Set approved by user if status is approved
             if (request.Status == "Approved" && string.IsNullOrEmpty(payment.ApprovedByUserId))
