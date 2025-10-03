@@ -270,7 +270,6 @@ namespace Nova.Infrastructure.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("ApprovedByUserId")
-                        .IsRequired()
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("BulkScheduleId")
@@ -326,7 +325,6 @@ namespace Nova.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ParentPaymentId")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -351,6 +349,7 @@ namespace Nova.Infrastructure.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("TenantId")
+                        .IsRequired()
                         .HasColumnType("character varying(50)");
 
                     b.Property<decimal>("TotalAmountPaid")
@@ -789,8 +788,7 @@ namespace Nova.Infrastructure.Migrations
                     b.HasOne("Nova.Domain.Entities.User", "ApprovedByUser")
                         .WithMany()
                         .HasForeignKey("ApprovedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Nova.Domain.Entities.BulkSchedule", "BulkSchedule")
                         .WithMany("Payments")
@@ -805,12 +803,13 @@ namespace Nova.Infrastructure.Migrations
                     b.HasOne("Nova.Domain.Entities.Payment", "ParentPayment")
                         .WithMany("ChildPayments")
                         .HasForeignKey("ParentPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Nova.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("Payments")
+                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Nova.Domain.Entities.Tenant", null)
-                        .WithMany("Payments")
-                        .HasForeignKey("TenantId");
 
                     b.HasOne("Nova.Domain.Entities.Vendor", "Vendor")
                         .WithMany("Payments")
@@ -825,6 +824,8 @@ namespace Nova.Infrastructure.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("ParentPayment");
+
+                    b.Navigation("Tenant");
 
                     b.Navigation("Vendor");
                 });
