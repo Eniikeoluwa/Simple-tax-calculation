@@ -32,12 +32,21 @@ public class PaymentController : BaseController
         return await SendQuery<GetPaymentsQuery, List<PaymentResponse>>(query);
     }
 
-    [HttpPut("{paymentId}/status")]
+    [HttpPatch("{paymentId}/status")]
     public async Task<ActionResult<bool>> UpdatePaymentStatus(
         string paymentId,
         [FromBody] UpdatePaymentStatusRequest request)
     {
         var command = new UpdatePaymentStatusCommand(paymentId, request);
         return await SendCommand<UpdatePaymentStatusCommand, bool>(command);
+    }
+
+    [HttpPatch("{paymentId}/approve")]
+    public async Task<ActionResult<bool>> ApprovePayment(
+        string paymentId,
+        [FromBody] ApprovePaymentRequest request)
+    {
+        var command = new ApprovePaymentCommand(paymentId, request);
+        return await SendCommand<ApprovePaymentCommand, bool>(command);
     }
 }
