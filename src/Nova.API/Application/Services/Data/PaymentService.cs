@@ -198,7 +198,7 @@ public class PaymentService : BaseDataService, IPaymentService
         var payment = new Payment
         {
             InvoiceNumber = request.InvoiceNumber,
-            GrossAmount = request.GrossAmount,
+            GrossAmount = request.GrossAmount, // This is the invoice amount before tax deductions
             Description = request.Description,
             Reference = request.Reference,
             InvoiceDate = DateTimeHelper.EnsureUtc(request.InvoiceDate),
@@ -210,7 +210,7 @@ public class PaymentService : BaseDataService, IPaymentService
             CreatedBy = currentUser,
             UpdatedBy = currentUser,
 
-            // For full payments, set original amount to gross amount
+            // For full payments, set amounts
             OriginalInvoiceAmount = request.GrossAmount,
             PaymentAmount = request.GrossAmount,
             TotalAmountPaid = request.GrossAmount,
@@ -221,7 +221,8 @@ public class PaymentService : BaseDataService, IPaymentService
             AppliedWhtRate = vendor.WhtRate
         };
 
-        // Calculate VAT, WHT, and Net Amount based on vendor settings
+        // Calculate VAT, WHT, and Net Amount (this will deduct taxes from GrossAmount)
+        // After this call: NetAmount = GrossAmount - VatAmount - WhtAmount
         payment.CalculateNetAmount();
 
         return payment;
