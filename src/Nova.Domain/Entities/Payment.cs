@@ -46,26 +46,28 @@ public class Payment : BaseEntity
     {
         if (IsPartialPayment && !IsFinalPayment)
         {
-            // For partial payments (not final), no tax deductions
+            // For first partial payments, no tax deductions applied yet
             VatAmount = 0;
             WhtAmount = 0;
-            NetAmount = PaymentAmount;
+            NetAmount = PaymentAmount; // Net equals payment amount (no deductions)
         }
         else if (IsFinalPayment)
         {
-            // For final payments, calculate tax from original invoice amount
+            // For final payments, calculate tax from original invoice amount and deduct from this payment
             var originalVatAmount = HasVatApplied ? OriginalInvoiceAmount * (AppliedVatRate / 100) : 0;
             var originalWhtAmount = HasWhtApplied ? OriginalInvoiceAmount * (AppliedWhtRate / 100) : 0;
             
             VatAmount = originalVatAmount;
             WhtAmount = originalWhtAmount;
+            // Deduct all taxes from the final payment amount
             NetAmount = PaymentAmount - VatAmount - WhtAmount;
         }
         else
         {
-            // For full payments (non-partial), use existing logic
+            // For full payments (non-partial), calculate taxes and deduct from gross amount
             VatAmount = HasVatApplied ? GrossAmount * (AppliedVatRate / 100) : 0;
             WhtAmount = HasWhtApplied ? GrossAmount * (AppliedWhtRate / 100) : 0;
+            // NetAmount is what vendor receives after tax deductions
             NetAmount = GrossAmount - VatAmount - WhtAmount;
         }
     }
