@@ -10,12 +10,11 @@ public class CreatePaymentRequest
     public DateTime? DueDate { get; set; }
     public string Remarks { get; set; } = string.Empty;
     public string VendorId { get; set; } = string.Empty;
-    
-    // Partial Payment Fields (Two-Payment System)
+
     public bool IsPartialPayment { get; set; } = false;
-    public decimal PartialPercentage { get; set; } = 0; // 50 or 70 for first payment, remaining for final
-    public bool IsFinalPayment { get; set; } = false; // True if this is the second (final) payment
-    public string FirstPaymentId { get; set; } = string.Empty; // Reference to first payment (for final payment)
+    public decimal PartialPercentage { get; set; } = 0; 
+    public bool IsFinalPayment { get; set; } = false; 
+    public string FirstPaymentId { get; set; } = string.Empty; 
 }
 
 public class PaymentResponse
@@ -83,4 +82,9 @@ public class UpdatePaymentStatusRequest
     public string Status { get; set; } = string.Empty;
     public string Remarks { get; set; } = string.Empty;
     public DateTime? PaymentDate { get; set; }
+}
+
+public class ApprovePaymentRequest
+{
+    public string Remarks { get; set; } = string.Empty;
 }
