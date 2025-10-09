@@ -82,4 +82,3 @@ public class UpdatePaymentStatusRequest
     public string Remarks { get; set; } = string.Empty;
     public DateTime? PaymentDate { get; set; }
 }
-c
