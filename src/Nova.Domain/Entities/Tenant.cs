@@ -14,6 +14,7 @@ public class Tenant : BaseEntity
     public virtual ICollection<TenantUser> TenantUsers { get; set; }
     public virtual ICollection<Vendor> Vendors { get; set; }
     public virtual ICollection<Payment> Payments { get; set; }
+    public virtual ICollection<BulkSchedule> BulkSchedules { get; set; }
 
     public Tenant()
     {
@@ -21,6 +22,7 @@ public class Tenant : BaseEntity
         TenantUsers = new HashSet<TenantUser>();
         Vendors = new HashSet<Vendor>();
         Payments = new HashSet<Payment>();
+        BulkSchedules = new HashSet<BulkSchedule>();
         IsActive = true;
     }
 }
