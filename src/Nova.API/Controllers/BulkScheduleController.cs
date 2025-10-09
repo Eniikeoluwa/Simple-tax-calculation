@@ -47,6 +47,15 @@ public class BulkScheduleController : BaseController
         return await SendCommand<UpdateBulkScheduleStatusCommand, bool>(command);
     }
 
+    [HttpPatch("{bulkScheduleId}/approve")]
+    public async Task<ActionResult<bool>> ApproveBulkSchedule(
+        string bulkScheduleId,
+        [FromBody] ApproveBulkScheduleRequest request)
+    {
+        var command = new ApproveBulkScheduleCommand(bulkScheduleId, request);
+        return await SendCommand<ApproveBulkScheduleCommand, bool>(command);
+    }
+
     [HttpDelete("{bulkScheduleId}")]
     public async Task<ActionResult<bool>> DeleteBulkSchedule(string bulkScheduleId)
     {
