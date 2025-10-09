@@ -14,7 +14,6 @@ public interface IPaymentService
     Task<Result<List<Payment>>> GetPaymentsForCurrentTenantAsync();
     Task<Result<Payment>> GetPaymentByIdAsync(string paymentId);
     Task<Result<bool>> UpdatePaymentStatusAsync(string paymentId, UpdatePaymentStatusRequest request);
-    Task<Result<bool>> ApprovePaymentAsync(string paymentId, ApprovePaymentRequest request);
     Task<Result<bool>> DeletePaymentAsync(string paymentId);
 }
 
@@ -238,7 +237,6 @@ public class PaymentService : BaseDataService, IPaymentService
             var payments = await _context.Payments
                 .Include(p => p.Vendor)
                 .Include(p => p.CreatedByUser)
-                .Include(p => p.ApprovedByUser)
                 .Where(p => p.TenantId == TenantId)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
@@ -261,7 +259,6 @@ public class PaymentService : BaseDataService, IPaymentService
             var payment = await _context.Payments
                 .Include(p => p.Vendor)
                 .Include(p => p.CreatedByUser)
-                .Include(p => p.ApprovedByUser)
                 .FirstOrDefaultAsync(p => p.Id == paymentId
                                     && p.TenantId == TenantId);
 
@@ -293,7 +290,7 @@ public class PaymentService : BaseDataService, IPaymentService
             var payment = paymentResult.Value;
 
             // Validate status transition
-            var validStatuses = new[] { "Pending", "Approved", "Processed", "Paid", "Cancelled" };
+            var validStatuses = new[] { "Pending", "Processed", "Paid", "Cancelled" };
             if (!validStatuses.Contains(request.Status))
                 return Result.Fail($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}");
 
@@ -304,12 +301,6 @@ public class PaymentService : BaseDataService, IPaymentService
             payment.UpdatedBy = UserId;
             payment.UpdatedAt = DateTime.UtcNow;
 
-            // Set approved by user if status is approved
-            if (request.Status == "Approved" && string.IsNullOrEmpty(payment.ApprovedByUserId))
-            {
-                payment.ApprovedByUserId = UserId;
-            }
-
             await SaveChangesAsync();
             return Result.Ok(true);
         }
@@ -319,41 +310,7 @@ public class PaymentService : BaseDataService, IPaymentService
         }
     }
 
-    public async Task<Result<bool>> ApprovePaymentAsync(string paymentId, ApprovePaymentRequest request)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(TenantId))
-                return Result.Fail("User is not associated with any tenant");
 
-            if (string.IsNullOrEmpty(UserId))
-                return Result.Fail("User not authenticated");
-
-            var paymentResult = await GetPaymentByIdAsync(paymentId);
-            if (paymentResult.IsFailed)
-                return Result.Fail(paymentResult.Errors);
-
-            var payment = paymentResult.Value;
-
-            // Check if payment is in pending status
-            if (payment.Status != "Pending")
-                return Result.Fail($"Payment cannot be approved. Current status: {payment.Status}. Only pending payments can be approved.");
-
-            // Update payment to approved status
-            payment.Status = "Approved";
-            payment.Remarks = request.Remarks ?? payment.Remarks;
-            payment.ApprovedByUserId = UserId;
-            payment.UpdatedBy = UserId;
-            payment.UpdatedAt = DateTime.UtcNow;
-
-            await SaveChangesAsync();
-            return Result.Ok(true);
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"An error occurred while approving payment: {ex.Message}");
-        }
-    }
 
     public async Task<Result<bool>> DeletePaymentAsync(string paymentId)
     {
