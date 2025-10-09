@@ -21,7 +21,7 @@ public class Payment : BaseEntity
     public string? BulkScheduleId { get; set; }
     public string TenantId { get; set; }
     public string CreatedByUserId { get; set; }
-    public string? ApprovedByUserId { get; set; }
+
     public decimal OriginalInvoiceAmount { get; set; } 
     public decimal PaymentAmount { get; set; } 
     public bool IsPartialPayment { get; set; } 
@@ -33,8 +33,6 @@ public class Payment : BaseEntity
     public virtual Vendor Vendor { get; set; }
     public virtual BulkSchedule BulkSchedule { get; set; }
     public virtual User CreatedByUser { get; set; }
-    public virtual User ApprovedByUser { get; set; }
-    
     public virtual Payment ParentPayment { get; set; }
     public virtual ICollection<Payment> ChildPayments { get; set; }
 
