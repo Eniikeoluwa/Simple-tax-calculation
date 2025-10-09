@@ -38,7 +38,6 @@ public class PaymentResponse
     public string VendorId { get; set; } = string.Empty;
     public string? BulkScheduleId { get; set; }
     public string CreatedByUserId { get; set; } = string.Empty;
-    public string ApprovedByUserId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     
@@ -83,8 +82,4 @@ public class UpdatePaymentStatusRequest
     public string Remarks { get; set; } = string.Empty;
     public DateTime? PaymentDate { get; set; }
 }
-
-public class ApprovePaymentRequest
-{
-    public string Remarks { get; set; } = string.Empty;
-}
+c
