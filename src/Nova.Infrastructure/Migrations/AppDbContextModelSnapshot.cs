@@ -180,6 +180,10 @@ namespace Nova.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("BatchNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("BulkScheduleId")
                         .IsRequired()
                         .HasColumnType("character varying(50)");
@@ -192,6 +196,10 @@ namespace Nova.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -203,6 +211,9 @@ namespace Nova.Infrastructure.Migrations
 
                     b.Property<string>("PaymentId")
                         .IsRequired()
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ProcessedByUserId")
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("ProcessedDate")
@@ -225,6 +236,10 @@ namespace Nova.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -268,7 +283,13 @@ namespace Nova.Infrastructure.Migrations
 
                     b.HasIndex("BulkScheduleId");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("PaymentId");
+
+                    b.HasIndex("ProcessedByUserId");
+
+                    b.HasIndex("TenantId");
 
                     b.HasIndex("VendorId");
 
@@ -791,9 +812,25 @@ namespace Nova.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Nova.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Nova.Domain.Entities.Payment", "Payment")
                         .WithMany()
                         .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nova.Domain.Entities.User", "ProcessedByUser")
+                        .WithMany()
+                        .HasForeignKey("ProcessedByUserId");
+
+                    b.HasOne("Nova.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -805,7 +842,13 @@ namespace Nova.Infrastructure.Migrations
 
                     b.Navigation("BulkSchedule");
 
+                    b.Navigation("CreatedByUser");
+
                     b.Navigation("Payment");
+
+                    b.Navigation("ProcessedByUser");
+
+                    b.Navigation("Tenant");
 
                     b.Navigation("Vendor");
                 });
