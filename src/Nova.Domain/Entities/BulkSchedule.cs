@@ -11,11 +11,17 @@ public class BulkSchedule : BaseEntity
     public int PaymentCount { get; set; }
     public DateTime ScheduledDate { get; set; }
     public DateTime? ProcessedDate { get; set; }
-    public string Status { get; set; } // Draft, Ready, Processed, Completed, Cancelled
+    public DateTime StartDate { get; set; }  // Start of the date range for payments
+    public DateTime EndDate { get; set; }    // End of the date range for payments
+    public string Status { get; set; } // Draft, Pending, Approved, Processed, Completed, Rejected, Cancelled
     public string Remarks { get; set; } = null!;
+    public string TenantId { get; set; } = null!;
     public string CreatedByUserId { get; set; } = null!;
     public string? ProcessedByUserId { get; set; }
+    public string? ApprovedByUserId { get; set; }
+    public DateTime? ApprovedDate { get; set; }
 
+    public virtual Tenant Tenant { get; set; } = null!;
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual User? ProcessedByUser { get; set; }
     public virtual ICollection<Payment> Payments { get; set; } = null!;
