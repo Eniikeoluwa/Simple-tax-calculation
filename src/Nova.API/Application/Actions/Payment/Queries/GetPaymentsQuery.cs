@@ -43,7 +43,6 @@ public class GetPaymentsQueryHandler : MediatR.IRequestHandler<GetPaymentsQuery,
             VendorId = payment.VendorId,
             BulkScheduleId = payment.BulkScheduleId,
             CreatedByUserId = payment.CreatedByUserId,
-            ApprovedByUserId = payment.ApprovedByUserId,
             CreatedAt = payment.CreatedAt,
             UpdatedAt = payment.UpdatedAt,
             Vendor = payment.Vendor != null ? new VendorInfo
@@ -61,13 +60,6 @@ public class GetPaymentsQueryHandler : MediatR.IRequestHandler<GetPaymentsQuery,
                 FirstName = payment.CreatedByUser.FirstName,
                 LastName = payment.CreatedByUser.LastName,
                 Email = payment.CreatedByUser.Email
-            } : null,
-            ApprovedByUser = payment.ApprovedByUser != null ? new UserInfo
-            {
-                Id = payment.ApprovedByUser.Id,
-                FirstName = payment.ApprovedByUser.FirstName,
-                LastName = payment.ApprovedByUser.LastName,
-                Email = payment.ApprovedByUser.Email
             } : null
         }).ToList();
 
