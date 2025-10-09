@@ -23,6 +23,8 @@ public class BulkScheduleResponse
     public string Status { get; set; } = string.Empty;
     public string Remarks { get; set; } = string.Empty;
     public string CreatedByUserId { get; set; } = string.Empty;
+    public string? ApprovedByUserId { get; set; }
+    public DateTime? ApprovedDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<PaymentResponse> Payments { get; set; } = new();
@@ -46,5 +48,10 @@ public class BulkScheduleListResponse
 public class UpdateBulkScheduleStatusRequest
 {
     public string Status { get; set; } = string.Empty;
+    public string Remarks { get; set; } = string.Empty;
+}
+
+public class ApproveBulkScheduleRequest
+{
     public string Remarks { get; set; } = string.Empty;
 }
