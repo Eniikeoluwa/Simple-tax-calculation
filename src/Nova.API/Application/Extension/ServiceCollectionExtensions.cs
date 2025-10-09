@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
     services.AddScoped<IUserService, UserService>();
     services.AddScoped<IPaymentService, PaymentService>();
     services.AddScoped<IBulkScheduleService, BulkScheduleService>();
+    services.AddScoped<IGapsScheduleService, GapsScheduleService>();
 
     services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
