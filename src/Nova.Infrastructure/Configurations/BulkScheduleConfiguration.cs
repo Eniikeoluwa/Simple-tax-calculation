@@ -19,6 +19,12 @@ public class BulkScheduleConfiguration : IEntityTypeConfiguration<BulkSchedule>
         builder.Property(b => b.TotalNetAmount).HasColumnType("decimal(18,2)");
         builder.Property(b => b.Status).HasMaxLength(50);
 
+        // Configure tenant relationship
+        builder.HasOne(b => b.Tenant)
+            .WithMany()
+            .HasForeignKey(b => b.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(b => b.Payments).WithOne(p => p.BulkSchedule).HasForeignKey(p => p.BulkScheduleId);
         builder.HasMany(b => b.GapsSchedules).WithOne(g => g.BulkSchedule).HasForeignKey(g => g.BulkScheduleId);
     }
