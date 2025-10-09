@@ -76,6 +76,12 @@ namespace Nova.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("ApprovedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("BatchNumber")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -98,6 +104,9 @@ namespace Nova.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -117,9 +126,19 @@ namespace Nova.Infrastructure.Migrations
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TenantId1")
                         .HasColumnType("character varying(50)");
 
                     b.Property<decimal>("TotalGrossAmount")
@@ -147,6 +166,10 @@ namespace Nova.Infrastructure.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("ProcessedByUserId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId1");
 
                     b.ToTable("BulkSchedules", (string)null);
                 });
@@ -268,9 +291,6 @@ namespace Nova.Infrastructure.Migrations
                     b.Property<decimal>("AppliedWhtRate")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("ApprovedByUserId")
-                        .HasColumnType("character varying(50)");
-
                     b.Property<string>("BulkScheduleId")
                         .HasColumnType("character varying(50)");
 
@@ -373,8 +393,6 @@ namespace Nova.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ApprovedByUserId");
 
                     b.HasIndex("BulkScheduleId");
 
@@ -748,9 +766,21 @@ namespace Nova.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("ProcessedByUserId");
 
+                    b.HasOne("Nova.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nova.Domain.Entities.Tenant", null)
+                        .WithMany("BulkSchedules")
+                        .HasForeignKey("TenantId1");
+
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("ProcessedByUser");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Nova.Domain.Entities.GapsSchedule", b =>
@@ -782,11 +812,6 @@ namespace Nova.Infrastructure.Migrations
 
             modelBuilder.Entity("Nova.Domain.Entities.Payment", b =>
                 {
-                    b.HasOne("Nova.Domain.Entities.User", "ApprovedByUser")
-                        .WithMany()
-                        .HasForeignKey("ApprovedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Nova.Domain.Entities.BulkSchedule", "BulkSchedule")
                         .WithMany("Payments")
                         .HasForeignKey("BulkScheduleId");
@@ -813,8 +838,6 @@ namespace Nova.Infrastructure.Migrations
                         .HasForeignKey("VendorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("ApprovedByUser");
 
                     b.Navigation("BulkSchedule");
 
@@ -902,6 +925,8 @@ namespace Nova.Infrastructure.Migrations
 
             modelBuilder.Entity("Nova.Domain.Entities.Tenant", b =>
                 {
+                    b.Navigation("BulkSchedules");
+
                     b.Navigation("Payments");
 
                     b.Navigation("TenantUsers");
