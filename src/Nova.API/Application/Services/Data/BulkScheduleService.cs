@@ -15,6 +15,7 @@ public interface IBulkScheduleService
     Task<Result<List<BulkScheduleListResponse>>> GetBulkSchedulesForCurrentTenantAsync();
     Task<Result<BulkScheduleResponse>> GetBulkScheduleByIdAsync(string bulkScheduleId);
     Task<Result<bool>> UpdateBulkScheduleStatusAsync(string bulkScheduleId, UpdateBulkScheduleStatusRequest request);
+    Task<Result<bool>> ApproveBulkScheduleAsync(string bulkScheduleId, ApproveBulkScheduleRequest request);
     Task<Result<bool>> DeleteBulkScheduleAsync(string bulkScheduleId);
     Task<Result<byte[]>> ExportBulkScheduleToCsvAsync(string bulkScheduleId);
 }
@@ -54,10 +55,8 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 .ThenInclude(v => v.Bank)
                 .Include(p => p.CreatedByUser)
                 .Where(p => p.TenantId == TenantId
-                         && p.Status.ToLower() == "approved"
                          && p.CreatedAt >= startDateUtc
-                         && p.CreatedAt <= endDateUtc
-                         && p.BulkScheduleId == null) // Only include payments not already in a bulk schedule
+                         && p.CreatedAt <= endDateUtc)
                 .OrderBy(p => p.Vendor.Name)
                 .ThenBy(p => p.CreatedAt)
                 .ToListAsync();
@@ -74,34 +73,29 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             // Generate batch number
             var batchNumber = await GenerateBatchNumberAsync();
 
-            // Create bulk schedule
+            // Create bulk schedule as a view/filter
             var bulkSchedule = new BulkSchedule
             {
                 BatchNumber = batchNumber,
-                Description = request.Description ?? $"Bulk Schedule - Payments created from {request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}",
+                Description = request.Description ?? $"Bulk Schedule - Payments from {request.StartDate:yyyy-MM-dd} to {request.EndDate:yyyy-MM-dd}",
                 TotalGrossAmount = totalGrossAmount,
                 TotalVatAmount = totalVatAmount,
                 TotalWhtAmount = totalWhtAmount,
                 TotalNetAmount = totalNetAmount,
                 PaymentCount = payments.Count,
                 ScheduledDate = DateTimeHelper.EnsureUtc(DateTime.Now),
-                Status = "Ready",
+                Status = "Pending", // Initial status, waiting for approval
                 Remarks = request.Remarks ?? "",
+                TenantId = TenantId,
                 CreatedByUserId = UserId,
                 CreatedBy = UserId,
-                UpdatedBy = UserId
+                UpdatedBy = UserId,
+                StartDate = startDateUtc,    // Store the date range for future queries
+                EndDate = endDateUtc
             };
 
             _context.BulkSchedules.Add(bulkSchedule);
             await _context.SaveChangesAsync();
-
-            // Associate payments with the bulk schedule
-            foreach (var payment in payments)
-            {
-                payment.BulkScheduleId = bulkSchedule.Id;
-                payment.UpdatedBy = UserId;
-                payment.UpdatedAt = DateTime.UtcNow;
-            }
 
             await _context.SaveChangesAsync();
 
@@ -163,7 +157,7 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
 
             var bulkSchedules = await _context.BulkSchedules
                 .Include(bs => bs.CreatedByUser)
-                .Where(bs => bs.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId))
+                .Where(bs => bs.TenantId == TenantId)
                 .OrderByDescending(bs => bs.CreatedAt)
                 .Select(bs => new BulkScheduleListResponse
                 {
@@ -199,13 +193,13 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             var bulkSchedule = await _context.BulkSchedules
                 .Include(bs => bs.CreatedByUser)
                 .Include(bs => bs.Payments)
-                .ThenInclude(p => p.Vendor)
-                .ThenInclude(v => v.Bank)
-                .FirstOrDefaultAsync(bs => bs.Id == bulkScheduleId
-                                    && bs.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
+                .FirstOrDefaultAsync(bs => bs.Id == bulkScheduleId && bs.TenantId == TenantId);
 
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
+
+            // Use the payments already included in the bulk schedule
+            var payments = bulkSchedule.Payments;
 
             var response = new BulkScheduleResponse
             {
@@ -224,7 +218,7 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 CreatedByUserId = bulkSchedule.CreatedByUserId,
                 CreatedAt = bulkSchedule.CreatedAt,
                 UpdatedAt = bulkSchedule.UpdatedAt,
-                Payments = bulkSchedule.Payments.Select(p => new PaymentResponse
+                Payments = payments.Select(p => new PaymentResponse
                 {
                     Id = p.Id,
                     InvoiceNumber = p.InvoiceNumber,
@@ -271,7 +265,7 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 return Result.Fail("Bulk schedule not found");
 
             // Validate status transition
-            var validStatuses = new[] { "Draft", "Ready", "Processed", "Completed", "Cancelled" };
+            var validStatuses = new[] { "Draft", "Pending", "Approved", "Processed", "Completed", "Rejected", "Cancelled" };
             if (!validStatuses.Contains(request.Status))
                 return Result.Fail($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}");
 
@@ -304,10 +298,8 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 return Result.Fail("User is not associated with any tenant");
 
             var bulkSchedule = await _context.BulkSchedules
-                .Include(bs => bs.CreatedByUser)
                 .Include(bs => bs.Payments)
-                .FirstOrDefaultAsync(bs => bs.Id == bulkScheduleId
-                                    && bs.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
+                .FirstOrDefaultAsync(bs => bs.Id == bulkScheduleId && bs.TenantId == TenantId);
 
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
@@ -333,6 +325,48 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
         }
     }
 
+    public async Task<Result<bool>> ApproveBulkScheduleAsync(string bulkScheduleId, ApproveBulkScheduleRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(TenantId))
+                return Result.Fail("User is not associated with any tenant");
+
+            var bulkSchedule = await _context.BulkSchedules
+                .Include(bs => bs.CreatedByUser)
+                .Include(bs => bs.Payments)
+                .FirstOrDefaultAsync(bs => bs.Id == bulkScheduleId && bs.TenantId == TenantId);
+
+            if (bulkSchedule == null)
+                return Result.Fail("Bulk schedule not found");
+
+            // Only allow approval of pending bulk schedules
+            if (bulkSchedule.Status.ToLower() != "pending")
+                return Result.Fail($"Cannot approve bulk schedule in {bulkSchedule.Status} status. Only pending bulk schedules can be approved.");
+
+            // Update status to Approved
+            bulkSchedule.Status = "Approved";
+            bulkSchedule.Remarks = request.Remarks ?? bulkSchedule.Remarks;
+            bulkSchedule.UpdatedBy = UserId;
+            bulkSchedule.UpdatedAt = DateTime.UtcNow;
+            bulkSchedule.ApprovedByUserId = UserId;
+            bulkSchedule.ApprovedDate = DateTime.UtcNow;
+
+            // Update payment statuses
+            foreach (var payment in bulkSchedule.Payments)
+            {
+                payment.Status = "Scheduled";
+            }
+
+            await _context.SaveChangesAsync();
+            return Result.Ok(true);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"An error occurred while approving bulk schedule: {ex.Message}");
+        }
+    }
+
     public async Task<Result<byte[]>> ExportBulkScheduleToCsvAsync(string bulkScheduleId)
     {
         try
@@ -346,7 +380,14 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 .ThenInclude(p => p.Vendor)
                 .ThenInclude(v => v.Bank)
                 .FirstOrDefaultAsync(bs => bs.Id == bulkScheduleId
-                                    && bs.CreatedByUser.TenantUsers.Any(tu => tu.TenantId == TenantId));
+                                    && bs.TenantId == TenantId);
+
+            if (bulkSchedule == null)
+                return Result.Fail("Bulk schedule not found");
+
+            // Only allow export of approved bulk schedules
+            if (bulkSchedule.Status.ToLower() != "approved")
+                return Result.Fail("Only approved bulk schedules can be exported");
 
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
