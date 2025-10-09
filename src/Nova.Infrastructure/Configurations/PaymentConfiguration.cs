@@ -40,15 +40,10 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // explicitly configure user relations to avoid ambiguity when multiple navigations to User exist
+        // Configure user relation
         builder.HasOne(p => p.CreatedByUser)
             .WithMany(u => u.CreatedPayments)
             .HasForeignKey(p => p.CreatedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(p => p.ApprovedByUser)
-            .WithMany() // no inverse navigation defined on User
-            .HasForeignKey(p => p.ApprovedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
