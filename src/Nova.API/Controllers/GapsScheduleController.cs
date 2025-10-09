@@ -24,7 +24,7 @@ public class GapsScheduleController : BaseController
         return await SendCommand<GenerateGapsScheduleCommand, List<GapsScheduleResponse>>(command);
     }
 
-    [HttpGet]
+    [HttpGet("list")]
     public async Task<ActionResult<List<GapsScheduleListResponse>>> GetGapsSchedules()
     {
         var query = new GetGapsSchedulesQuery();
@@ -35,7 +35,7 @@ public class GapsScheduleController : BaseController
     public async Task<ActionResult<GapsScheduleResponse>> GetGapsScheduleById(string id)
     {
         var query = new GetGapsScheduleByIdQuery(id);
-        return await SendQuery<GetGapsScheduleByIdQuery, GapsScheduleResponse>(queary);
+        return await SendQuery<GetGapsScheduleByIdQuery, GapsScheduleResponse>(query);
     }
 
     [HttpGet("export/{batchNumber}")]
