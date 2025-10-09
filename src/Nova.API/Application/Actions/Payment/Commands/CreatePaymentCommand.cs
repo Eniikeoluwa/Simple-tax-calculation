@@ -47,7 +47,6 @@ public class CreatePaymentCommandHandler : MediatR.IRequestHandler<CreatePayment
             VendorId = payment.VendorId,
             BulkScheduleId = payment.BulkScheduleId,
             CreatedByUserId = payment.CreatedByUserId,
-            ApprovedByUserId = payment.ApprovedByUserId,
             CreatedAt = payment.CreatedAt,
             UpdatedAt = payment.UpdatedAt,
             
