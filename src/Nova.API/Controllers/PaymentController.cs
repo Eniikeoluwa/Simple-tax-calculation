@@ -40,13 +40,4 @@ public class PaymentController : BaseController
         var command = new UpdatePaymentStatusCommand(paymentId, request);
         return await SendCommand<UpdatePaymentStatusCommand, bool>(command);
     }
-
-    [HttpPatch("{paymentId}/approve")]
-    public async Task<ActionResult<bool>> ApprovePayment(
-        string paymentId,
-        [FromBody] ApprovePaymentRequest request)
-    {
-        var command = new ApprovePaymentCommand(paymentId, request);
-        return await SendCommand<ApprovePaymentCommand, bool>(command);
-    }
 }
