@@ -17,11 +17,11 @@ public class GapsScheduleController : BaseController
     }
 
     [HttpPost("generate")]
-    public async Task<ActionResult<List<GapsScheduleResponse>>> GenerateGapsSchedule(
+    public async Task<ActionResult<GapsScheduleResponse>> GenerateGapsSchedule(
         [FromBody] GenerateGapsScheduleRequest request)
     {
         var command = new GenerateGapsScheduleCommand(request);
-        return await SendCommand<GenerateGapsScheduleCommand, List<GapsScheduleResponse>>(command);
+        return await SendCommand<GenerateGapsScheduleCommand, GapsScheduleResponse>(command);
     }
 
     [HttpGet("list")]
@@ -31,23 +31,28 @@ public class GapsScheduleController : BaseController
         return await SendQuery<GetGapsSchedulesQuery, List<GapsScheduleListResponse>>(query);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<GapsScheduleResponse>> GetGapsScheduleById(string id)
+    [HttpGet("{batchNumber}")]
+    public async Task<ActionResult<GapsScheduleResponse>> GetGapsScheduleByBatchNumber(string batchNumber)
     {
-        var query = new GetGapsScheduleByIdQuery(id);
+        var query = new GetGapsScheduleByIdQuery(batchNumber);
         return await SendQuery<GetGapsScheduleByIdQuery, GapsScheduleResponse>(query);
     }
 
     [HttpGet("export/{batchNumber}")]
-    public async Task<ActionResult> ExportToExcel(string batchNumber)
+    public async Task<IActionResult> ExportToExcel(string batchNumber)
     {
         var command = new ExportGapsScheduleCommand(batchNumber);
         var result = await SendCommand<ExportGapsScheduleCommand, GapsScheduleExportResponse>(command);
 
-        return File(
-            result.Value.FileContent,
-            result.Value.ContentType,
-            result.Value.FileName
-        );
+        if (result.Result is OkObjectResult okResult && okResult.Value is GapsScheduleExportResponse exportData)
+        {
+            return File(
+                exportData.FileContent,
+                exportData.ContentType,
+                exportData.FileName
+            );
+        }
+
+        return result.Result ?? BadRequest("Failed to export GAPS schedule");
     }
 }
