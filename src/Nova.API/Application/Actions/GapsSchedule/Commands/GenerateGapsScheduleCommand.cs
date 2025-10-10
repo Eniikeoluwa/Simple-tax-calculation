@@ -7,9 +7,9 @@ using Nova.API.Application.Services.Data;
 
 namespace Nova.API.Application.Actions.GapsSchedule.Commands;
 
-public record GenerateGapsScheduleCommand(GenerateGapsScheduleRequest Request) : IRequest<Result<List<GapsScheduleResponse>>>;
+public record GenerateGapsScheduleCommand(GenerateGapsScheduleRequest Request) : IRequest<Result<GapsScheduleResponse>>;
 
-public class GenerateGapsScheduleHandler : IRequestHandler<GenerateGapsScheduleCommand, Result<List<GapsScheduleResponse>>>
+public class GenerateGapsScheduleHandler : IRequestHandler<GenerateGapsScheduleCommand, Result<GapsScheduleResponse>>
 {
     private readonly IGapsScheduleService _gapsScheduleService;
 
@@ -18,7 +18,7 @@ public class GenerateGapsScheduleHandler : IRequestHandler<GenerateGapsScheduleC
         _gapsScheduleService = gapsScheduleService;
     }
 
-    public async Task<Result<List<GapsScheduleResponse>>> Handle(GenerateGapsScheduleCommand command, CancellationToken cancellationToken)
+    public async Task<Result<GapsScheduleResponse>> Handle(GenerateGapsScheduleCommand command, CancellationToken cancellationToken)
     {
         return await _gapsScheduleService.GenerateGapsScheduleAsync(command.Request);
     }
