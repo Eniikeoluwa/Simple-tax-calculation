@@ -40,6 +40,11 @@ namespace Nova.API.Controllers
                 var result = await _mediator.Send(request, HttpContext.RequestAborted);
                 if (result.IsSuccess)
                 {
+                    // Add null check for debugging
+                    if (result.Value == null)
+                    {
+                        return Ok(new { message = "Success but value is null", data = (TResponse?)default });
+                    }
                     return Ok(result.Value);
                 }
 
