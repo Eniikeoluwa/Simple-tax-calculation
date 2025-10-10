@@ -55,3 +55,10 @@ public class ApproveBulkScheduleRequest
 {
     public string Remarks { get; set; } = string.Empty;
 }
+
+public class BulkScheduleExportResponse
+{
+    public byte[] FileContent { get; set; } = null!;
+    public string FileName { get; set; } = null!;
+    public string ContentType { get; set; } = null!;
+}
