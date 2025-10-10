@@ -1,24 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using Nova.Domain.Entities;
-using Nova.Domain.Utils;
 using Nova.Infrastructure;
 using Nova.Contracts.Models;
-using System.Text;
 using FluentResults;
 using Nova.API.Application.Services.Common;
-using Nova.API.Application.Helpers;
 using ClosedXML.Excel;
-using Nova.Infrastructure;
-using Nova.Contracts.Models;
 
 
 namespace Nova.API.Application.Services.Data;
 
 public interface IGapsScheduleService
 {
-    Task<Result<List<GapsScheduleResponse>>> GenerateGapsScheduleAsync(GenerateGapsScheduleRequest request);
+    Task<Result<GapsScheduleResponse>> GenerateGapsScheduleAsync(GenerateGapsScheduleRequest request);
     Task<Result<List<GapsScheduleListResponse>>> GetGapsSchedulesForCurrentTenantAsync();
-    Task<Result<GapsScheduleResponse>> GetGapsScheduleByIdAsync(string id);
+    Task<Result<GapsScheduleResponse>> GetGapsScheduleByIdAsync(string batchNumber);
     Task<Result<GapsScheduleExportResponse>> ExportToExcelAsync(string batchNumber);
 }
 
@@ -32,7 +27,7 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
     }
     private string TenantId => _currentUserService.TenantId;
 
-    public async Task<Result<List<GapsScheduleResponse>>> GenerateGapsScheduleAsync(GenerateGapsScheduleRequest request)
+    public async Task<Result<GapsScheduleResponse>> GenerateGapsScheduleAsync(GenerateGapsScheduleRequest request)
     {
         try
         {
@@ -49,67 +44,89 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
 
+            // Only approved bulk schedules can generate GAPS schedules
             if (bulkSchedule.Status != "Approved")
-                return Result.Fail("Only approved bulk schedules can be used to generate GAPS schedule");
+                return Result.Fail($"Only approved bulk schedules can be used to generate GAPS schedule. Current status: {bulkSchedule.Status}. Please approve the bulk schedule first.");
 
+            // Check if payments are linked to this bulk schedule
+            if (!bulkSchedule.Payments.Any())
+                return Result.Fail("No payments are linked to this bulk schedule. Please ensure payments are properly associated with the bulk schedule.");
+
+            // Generate batch number
+            var batchNumber = $"GAPS-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
             var gapsSchedules = new List<GapsSchedule>();
-            var batchNumber = $"GAPS-{DateTime.Now:yyyyMMdd-HHmmss}";
 
             foreach (var payment in bulkSchedule.Payments)
             {
                 var vendor = payment.Vendor;
-
-                // Skip if vendor doesn't have bank sort code
-                if (string.IsNullOrEmpty(vendor.Bank?.SortCode))
-                    continue;
+                if (vendor == null) continue;
 
                 var gapsSchedule = new GapsSchedule
                 {
                     BatchNumber = batchNumber,
                     PaymentAmount = payment.NetAmount,
                     PaymentDate = request.PaymentDate,
-                    Reference = payment.Reference ?? payment.InvoiceNumber,
-                    Remark = payment.Description.Length > 25 ? payment.Description[..25] : payment.Description,
-                    VendorCode = vendor.Code,
-                    VendorName = vendor.Name,
-                    VendorAccountNumber = vendor.AccountNumber,
-                    VendorBankSortCode = vendor.Bank.SortCode,
-                    VendorBankName = vendor.Bank.Name,
+                    Reference = !string.IsNullOrWhiteSpace(payment.Reference) ? payment.Reference : payment.InvoiceNumber ?? "",
+                    Remark = !string.IsNullOrWhiteSpace(payment.Description) && payment.Description.Length > 25 
+                        ? payment.Description[..25] 
+                        : payment.Description ?? "",
+                    VendorCode = vendor.Code ?? "",
+                    VendorName = vendor.Name ?? "",
+                    VendorAccountNumber = vendor.AccountNumber ?? "",
+                    VendorBankSortCode = vendor.Bank?.SortCode ?? "",
+                    VendorBankName = vendor.Bank?.Name ?? "",
                     BulkScheduleId = bulkSchedule.Id,
                     PaymentId = payment.Id,
                     VendorId = vendor.Id,
                     TenantId = TenantId,
-                    CreatedByUserId = payment.CreatedByUserId,
+                    CreatedByUserId = _currentUserService.UserId,
+                    CreatedBy = _currentUserService.UserId,
+                    UpdatedBy = _currentUserService.UserId,
                     Status = "Generated"
                 };
 
                 gapsSchedules.Add(gapsSchedule);
             }
 
+            if (!gapsSchedules.Any())
+                return Result.Fail("No valid payments found to generate GAPS schedules.");
+
             _context.GapsSchedules.AddRange(gapsSchedules);
             await _context.SaveChangesAsync();
 
-            var response = gapsSchedules.Select(gs => new GapsScheduleResponse
+            // Create the grouped response
+            var response = new GapsScheduleResponse
             {
-                Id = gs.Id,
-                BatchNumber = gs.BatchNumber,
-                PaymentAmount = gs.PaymentAmount,
-                PaymentDate = gs.PaymentDate,
-                Reference = gs.Reference,
-                Remark = gs.Remark,
-                VendorCode = gs.VendorCode,
-                VendorName = gs.VendorName,
-                VendorAccountNumber = gs.VendorAccountNumber,
-                VendorBankSortCode = gs.VendorBankSortCode,
-                VendorBankName = gs.VendorBankName,
-                Status = gs.Status,
-                UploadedDate = gs.UploadedDate,
-                ProcessedDate = gs.ProcessedDate,
-                ProcessingNotes = gs.ProcessingNotes,
-                BulkScheduleId = gs.BulkScheduleId,
-                CreatedByUserId = gs.CreatedByUserId,
-                CreatedAt = gs.CreatedAt
-            }).ToList();
+                Id = batchNumber, // Use batch number as the main ID
+                BatchNumber = batchNumber,
+                TotalPaymentAmount = gapsSchedules.Sum(gs => gs.PaymentAmount),
+                PaymentDate = request.PaymentDate,
+                TotalItems = gapsSchedules.Count,
+                Status = "Generated",
+                BulkScheduleId = bulkSchedule.Id,
+                CreatedByUserId = _currentUserService.UserId,
+                CreatedAt = DateTime.UtcNow,
+                Items = gapsSchedules.Select(gs => new GapsScheduleItemResponse
+                {
+                    Id = gs.Id,
+                    PaymentAmount = gs.PaymentAmount,
+                    PaymentDate = gs.PaymentDate,
+                    Reference = gs.Reference,
+                    Remark = gs.Remark,
+                    VendorCode = gs.VendorCode,
+                    VendorName = gs.VendorName,
+                    VendorAccountNumber = gs.VendorAccountNumber,
+                    VendorBankSortCode = gs.VendorBankSortCode,
+                    VendorBankName = gs.VendorBankName,
+                    Status = gs.Status,
+                    UploadedDate = gs.UploadedDate,
+                    ProcessedDate = gs.ProcessedDate,
+                    ProcessingNotes = gs.ProcessingNotes,
+                    PaymentId = gs.PaymentId,
+                    VendorId = gs.VendorId,
+                    CreatedAt = gs.CreatedAt
+                }).ToList()
+            };
 
             return Result.Ok(response);
         }
@@ -128,17 +145,18 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
 
             var gapsSchedules = await _context.GapsSchedules
                 .Where(gs => gs.TenantId == TenantId)
-                .OrderByDescending(gs => gs.CreatedAt)
-                .Select(gs => new GapsScheduleListResponse
+                .GroupBy(gs => gs.BatchNumber)
+                .Select(g => new GapsScheduleListResponse
                 {
-                    Id = gs.Id,
-                    BatchNumber = gs.BatchNumber,
-                    PaymentAmount = gs.PaymentAmount,
-                    PaymentDate = gs.PaymentDate,
-                    VendorName = gs.VendorName,
-                    Status = gs.Status,
-                    CreatedAt = gs.CreatedAt
+                    Id = g.Key, // Use batch number as ID
+                    BatchNumber = g.Key,
+                    TotalPaymentAmount = g.Sum(gs => gs.PaymentAmount),
+                    PaymentDate = g.First().PaymentDate,
+                    TotalItems = g.Count(),
+                    Status = g.First().Status,
+                    CreatedAt = g.Min(gs => gs.CreatedAt)
                 })
+                .OrderByDescending(gs => gs.CreatedAt)
                 .ToListAsync();
 
             return Result.Ok(gapsSchedules);
@@ -149,39 +167,53 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
         }
     }
 
-    public async Task<Result<GapsScheduleResponse>> GetGapsScheduleByIdAsync(string id)
+    public async Task<Result<GapsScheduleResponse>> GetGapsScheduleByIdAsync(string batchNumber)
     {
         try
         {
             if (string.IsNullOrEmpty(TenantId))
                 return Result.Fail("User is not associated with any tenant");
 
-            var gapsSchedule = await _context.GapsSchedules
-                .FirstOrDefaultAsync(gs => gs.Id == id && gs.TenantId == TenantId);
+            var gapsSchedules = await _context.GapsSchedules
+                .Where(gs => gs.BatchNumber == batchNumber && gs.TenantId == TenantId)
+                .OrderBy(gs => gs.CreatedAt)
+                .ToListAsync();
 
-            if (gapsSchedule == null)
+            if (!gapsSchedules.Any())
                 return Result.Fail("GAPS schedule not found");
 
+            var firstGapsSchedule = gapsSchedules.First();
             var response = new GapsScheduleResponse
             {
-                Id = gapsSchedule.Id,
-                BatchNumber = gapsSchedule.BatchNumber,
-                PaymentAmount = gapsSchedule.PaymentAmount,
-                PaymentDate = gapsSchedule.PaymentDate,
-                Reference = gapsSchedule.Reference,
-                Remark = gapsSchedule.Remark,
-                VendorCode = gapsSchedule.VendorCode,
-                VendorName = gapsSchedule.VendorName,
-                VendorAccountNumber = gapsSchedule.VendorAccountNumber,
-                VendorBankSortCode = gapsSchedule.VendorBankSortCode,
-                VendorBankName = gapsSchedule.VendorBankName,
-                Status = gapsSchedule.Status,
-                UploadedDate = gapsSchedule.UploadedDate,
-                ProcessedDate = gapsSchedule.ProcessedDate,
-                ProcessingNotes = gapsSchedule.ProcessingNotes,
-                BulkScheduleId = gapsSchedule.BulkScheduleId,
-                CreatedByUserId = gapsSchedule.CreatedByUserId,
-                CreatedAt = gapsSchedule.CreatedAt
+                Id = batchNumber,
+                BatchNumber = batchNumber,
+                TotalPaymentAmount = gapsSchedules.Sum(gs => gs.PaymentAmount),
+                PaymentDate = firstGapsSchedule.PaymentDate,
+                TotalItems = gapsSchedules.Count,
+                Status = firstGapsSchedule.Status,
+                BulkScheduleId = firstGapsSchedule.BulkScheduleId,
+                CreatedByUserId = firstGapsSchedule.CreatedByUserId,
+                CreatedAt = firstGapsSchedule.CreatedAt,
+                Items = gapsSchedules.Select(gs => new GapsScheduleItemResponse
+                {
+                    Id = gs.Id,
+                    PaymentAmount = gs.PaymentAmount,
+                    PaymentDate = gs.PaymentDate,
+                    Reference = gs.Reference,
+                    Remark = gs.Remark,
+                    VendorCode = gs.VendorCode,
+                    VendorName = gs.VendorName,
+                    VendorAccountNumber = gs.VendorAccountNumber,
+                    VendorBankSortCode = gs.VendorBankSortCode,
+                    VendorBankName = gs.VendorBankName,
+                    Status = gs.Status,
+                    UploadedDate = gs.UploadedDate,
+                    ProcessedDate = gs.ProcessedDate,
+                    ProcessingNotes = gs.ProcessingNotes,
+                    PaymentId = gs.PaymentId,
+                    VendorId = gs.VendorId,
+                    CreatedAt = gs.CreatedAt
+                }).ToList()
             };
 
             return Result.Ok(response);
