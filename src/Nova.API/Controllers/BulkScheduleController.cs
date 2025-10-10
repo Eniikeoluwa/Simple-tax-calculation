@@ -67,24 +67,15 @@ public class BulkScheduleController : BaseController
     public async Task<IActionResult> ExportBulkScheduleToCsv(string bulkScheduleId)
     {
         var query = new ExportBulkScheduleToCsvQuery(bulkScheduleId);
-        var result = await SendQuery<ExportBulkScheduleToCsvQuery, byte[]>(query);
+        var result = await SendQuery<ExportBulkScheduleToCsvQuery, BulkScheduleExportResponse>(query);
 
-        if (result.Result is OkObjectResult okResult && okResult.Value is byte[] csvData)
+        if (result.Result is OkObjectResult okResult && okResult.Value is BulkScheduleExportResponse exportData)
         {
-            var bulkScheduleQuery = new GetBulkScheduleByIdQuery(bulkScheduleId);
-            var bulkScheduleResult = await SendQuery<GetBulkScheduleByIdQuery, BulkScheduleResponse>(bulkScheduleQuery);
-
-            var fileName = "BulkSchedule_Export.csv";
-            if (bulkScheduleResult.Result is OkObjectResult bulkScheduleOk && bulkScheduleOk.Value is BulkScheduleResponse bulkSchedule)
-            {
-                fileName = $"BulkSchedule_{bulkSchedule.BatchNumber}_{DateTime.UtcNow:yyyyMMdd}.csv";
-            }
-            else
-            {
-                fileName = $"BulkSchedule_{bulkScheduleId}_{DateTime.UtcNow:yyyyMMdd}.csv";
-            }
-
-            return File(csvData, "text/csv", fileName);
+            return File(
+                exportData.FileContent,
+                exportData.ContentType,
+                exportData.FileName
+            );
         }
 
         return result.Result ?? BadRequest("Failed to export bulk schedule");
