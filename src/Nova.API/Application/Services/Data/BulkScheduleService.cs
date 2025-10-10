@@ -17,7 +17,7 @@ public interface IBulkScheduleService
     Task<Result<bool>> UpdateBulkScheduleStatusAsync(string bulkScheduleId, UpdateBulkScheduleStatusRequest request);
     Task<Result<bool>> ApproveBulkScheduleAsync(string bulkScheduleId, ApproveBulkScheduleRequest request);
     Task<Result<bool>> DeleteBulkScheduleAsync(string bulkScheduleId);
-    Task<Result<byte[]>> ExportBulkScheduleToCsvAsync(string bulkScheduleId);
+    Task<Result<BulkScheduleExportResponse>> ExportBulkScheduleToCsvAsync(string bulkScheduleId);
 }
 
 public class BulkScheduleService : BaseDataService, IBulkScheduleService
@@ -96,6 +96,14 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
 
             _context.BulkSchedules.Add(bulkSchedule);
             await _context.SaveChangesAsync();
+
+            // Link all payments to this bulk schedule
+            foreach (var payment in payments)
+            {
+                payment.BulkScheduleId = bulkSchedule.Id;
+                payment.UpdatedBy = UserId;
+                payment.UpdatedAt = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -192,14 +200,19 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
 
             var bulkSchedule = await _context.BulkSchedules
                 .Include(bs => bs.CreatedByUser)
-                .Include(bs => bs.Payments)
                 .FirstOrDefaultAsync(bs => bs.Id == bulkScheduleId && bs.TenantId == TenantId);
 
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
 
-            // Use the payments already included in the bulk schedule
-            var payments = bulkSchedule.Payments;
+            // Get payments linked to this bulk schedule
+            var payments = await _context.Payments
+                .Include(p => p.Vendor)
+                .ThenInclude(v => v.Bank)
+                .Where(p => p.BulkScheduleId == bulkScheduleId && p.TenantId == TenantId)
+                .OrderBy(p => p.Vendor.Name)
+                .ThenBy(p => p.CreatedAt)
+                .ToListAsync();
 
             var response = new BulkScheduleResponse
             {
@@ -352,10 +365,13 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             bulkSchedule.ApprovedByUserId = UserId;
             bulkSchedule.ApprovedDate = DateTime.UtcNow;
 
-            // Update payment statuses
+            // Update payment statuses and ensure they're linked to the bulk schedule
             foreach (var payment in bulkSchedule.Payments)
             {
                 payment.Status = "Scheduled";
+                payment.BulkScheduleId = bulkSchedule.Id; // Ensure linkage
+                payment.UpdatedBy = UserId;
+                payment.UpdatedAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
@@ -367,7 +383,7 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
         }
     }
 
-    public async Task<Result<byte[]>> ExportBulkScheduleToCsvAsync(string bulkScheduleId)
+    public async Task<Result<BulkScheduleExportResponse>> ExportBulkScheduleToCsvAsync(string bulkScheduleId)
     {
         try
         {
@@ -388,9 +404,6 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             // Only allow export of approved bulk schedules
             if (bulkSchedule.Status.ToLower() != "approved")
                 return Result.Fail("Only approved bulk schedules can be exported");
-
-            if (bulkSchedule == null)
-                return Result.Fail("Bulk schedule not found");
 
             var csv = new StringBuilder();
 
@@ -415,7 +428,14 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             csv.AppendLine($"Total WHT,{bulkSchedule.TotalWhtAmount:N2}");
             csv.AppendLine($"Total Payable,{bulkSchedule.TotalNetAmount:N2}");
 
-            return Result.Ok(Encoding.UTF8.GetBytes(csv.ToString()));
+            var response = new BulkScheduleExportResponse
+            {
+                FileContent = Encoding.UTF8.GetBytes(csv.ToString()),
+                FileName = $"BulkSchedule_{bulkSchedule.BatchNumber}_{DateTime.UtcNow:yyyyMMdd}.csv",
+                ContentType = "text/csv"
+            };
+
+            return Result.Ok(response);
         }
         catch (Exception ex)
         {
