@@ -7,7 +7,7 @@ using Nova.API.Application.Services.Data;
 
 namespace Nova.API.Application.Actions.GapsSchedule.Queries;
 
-public record GetGapsScheduleByIdQuery(string Id) : IRequest<Result<GapsScheduleResponse>>;
+public record GetGapsScheduleByIdQuery(string BatchNumber) : IRequest<Result<GapsScheduleResponse>>;
 
 public class GetGapsScheduleByIdHandler : IRequestHandler<GetGapsScheduleByIdQuery, Result<GapsScheduleResponse>>
 {
@@ -20,6 +20,6 @@ public class GetGapsScheduleByIdHandler : IRequestHandler<GetGapsScheduleByIdQue
 
     public async Task<Result<GapsScheduleResponse>> Handle(GetGapsScheduleByIdQuery query, CancellationToken cancellationToken)
     {
-        return await _gapsScheduleService.GetGapsScheduleByIdAsync(query.Id);
+        return await _gapsScheduleService.GetGapsScheduleByIdAsync(query.BatchNumber);
     }
 }
