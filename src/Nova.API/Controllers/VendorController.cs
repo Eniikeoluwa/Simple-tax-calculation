@@ -32,5 +32,14 @@ public class VendorController : BaseController
         var query = new GetVendorsQuery();
         return await SendQuery<GetVendorsQuery, List<VendorResponse>>(query);
     }
+
+    [HttpPatch("{vendorId}")]
+    public async Task<ActionResult<VendorResponse>> UpdateVendor(
+        [FromRoute] string vendorId,
+        [FromBody] UpdateVendorRequest request)
+    {
+        var command = new UpdateVendorCommand(vendorId, request);
+        return await SendCommand<UpdateVendorCommand, VendorResponse>(command);
+    }
 }
 
