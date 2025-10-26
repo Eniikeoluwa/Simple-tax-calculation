@@ -35,9 +35,18 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtSettings = configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
-        var issuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("JWT Issuer not configured");
-        var audience = jwtSettings["Audience"] ?? throw new InvalidOperationException("JWT Audience not configured");
+        var secretKey = !string.IsNullOrEmpty(jwtSettings["SecretKey"]) 
+            ? jwtSettings["SecretKey"] 
+            : Environment.GetEnvironmentVariable("JWT_SECRET_KEY") 
+            ?? throw new InvalidOperationException("JWT SecretKey not configured");
+        var issuer = !string.IsNullOrEmpty(jwtSettings["Issuer"]) 
+            ? jwtSettings["Issuer"] 
+            : Environment.GetEnvironmentVariable("JWT_ISSUER") 
+            ?? "NovaAPI";
+        var audience = !string.IsNullOrEmpty(jwtSettings["Audience"]) 
+            ? jwtSettings["Audience"] 
+            : Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+            ?? "NovaClients";
 
         services.AddAuthentication(options =>
         {
@@ -54,7 +63,7 @@ public static class ServiceCollectionExtensions
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = issuer,
                 ValidAudience = audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
                 ClockSkew = TimeSpan.Zero
             };
             options.Events = new JwtBearerEvents
