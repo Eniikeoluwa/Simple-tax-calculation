@@ -135,7 +135,7 @@ public static class ServiceCollectionExtensions
         {
             options.AddPolicy("AllowAll", policy =>
             {
-                policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+                policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "https://novastat-gray.vercel.app")
                       .AllowAnyMethod()
                       .AllowAnyHeader()
                       .AllowCredentials();
