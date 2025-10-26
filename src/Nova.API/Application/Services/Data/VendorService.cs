@@ -12,7 +12,7 @@ public interface IVendorService
     Task<Result<Vendor>> CreateVendorAsync(CreateVendorRequest request);
     Task<Result<List<Vendor>>> GetVendorsForCurrentTenantAsync();
     Task<Result<Vendor>> GetVendorByIdAsync(string vendorId);
-    Task<Result<bool>> UpdateVendorAsync(Vendor vendor);
+    Task<Result<Vendor>> UpdateVendorAsync(string vendorId, UpdateVendorRequest request);
     Task<Result<bool>> DeleteVendorAsync(string vendorId);
 }
 
@@ -158,11 +158,11 @@ public class VendorService : BaseDataService, IVendorService
         }
     }
 
-    public async Task<Result<bool>> UpdateVendorAsync(Vendor vendor)
+    public async Task<Result<Vendor>> UpdateVendorAsync(string vendorId, UpdateVendorRequest request)
     {
         try
         {
-            var existingVendor = await _context.Vendors.FindAsync(vendor.Id);
+            var existingVendor = await _context.Vendors.Include(v => v.Bank).FirstOrDefaultAsync(v => v.Id == vendorId);
             if (existingVendor == null)
                 return Result.Fail("Vendor not found");
 
@@ -171,25 +171,55 @@ public class VendorService : BaseDataService, IVendorService
             if (!string.IsNullOrEmpty(tenantId) && existingVendor.TenantId != tenantId)
                 return Result.Fail("Vendor not found in current tenant");
 
-            // Update properties
-            existingVendor.Name = vendor.Name;
-            existingVendor.Code = vendor.Code;
-            existingVendor.AccountName = vendor.AccountName;
-            existingVendor.AccountNumber = vendor.AccountNumber;
-            existingVendor.Address = vendor.Address;
-            existingVendor.PhoneNumber = vendor.PhoneNumber;
-            existingVendor.Email = vendor.Email;
-            existingVendor.TaxIdentificationNumber = vendor.TaxIdentificationNumber;
-            existingVendor.TaxType = vendor.TaxType;
-            existingVendor.VatRate = vendor.VatRate;
-            existingVendor.WhtRate = vendor.WhtRate;
-            existingVendor.BankId = vendor.BankId;
-            existingVendor.IsActive = vendor.IsActive;
+            // Update properties (only if provided in request)
+            if (!string.IsNullOrEmpty(request.Name))
+                existingVendor.Name = request.Name;
+            if (!string.IsNullOrEmpty(request.Code))
+                existingVendor.Code = request.Code;
+            if (!string.IsNullOrEmpty(request.AccountName))
+                existingVendor.AccountName = request.AccountName;
+            if (!string.IsNullOrEmpty(request.AccountNumber))
+                existingVendor.AccountNumber = request.AccountNumber;
+            if (!string.IsNullOrEmpty(request.Address))
+                existingVendor.Address = request.Address;
+            if (!string.IsNullOrEmpty(request.PhoneNumber))
+                existingVendor.PhoneNumber = request.PhoneNumber;
+            if (!string.IsNullOrEmpty(request.Email))
+                existingVendor.Email = request.Email;
+            if (!string.IsNullOrEmpty(request.TaxIdentificationNumber))
+                existingVendor.TaxIdentificationNumber = request.TaxIdentificationNumber;
+            if (!string.IsNullOrEmpty(request.TaxType))
+                existingVendor.TaxType = request.TaxType;
+            if (request.VatRate.HasValue)
+                existingVendor.VatRate = request.VatRate.Value;
+            if (request.WhtRate.HasValue)
+                existingVendor.WhtRate = request.WhtRate.Value;
+            if (!string.IsNullOrEmpty(request.BankId))
+                existingVendor.BankId = request.BankId;
+            if (request.IsActive.HasValue)
+                existingVendor.IsActive = request.IsActive.Value;
+
+            // Handle bank creation if BankId is not provided but bank details are
+            if (string.IsNullOrEmpty(request.BankId) && !string.IsNullOrEmpty(request.BankName))
+            {
+                var bankCreateRequest = new Nova.Contracts.Models.CreateBankRequest
+                {
+                    Name = request.BankName,
+                    SortCode = request.BankSortCode ?? string.Empty,
+                    Code = request.BankCode ?? string.Empty
+                };
+                var bankResult = await _bankService.FindOrCreateBankAsync(bankCreateRequest);
+                if (bankResult.IsSuccess)
+                {
+                    existingVendor.BankId = bankResult.Value.Id;
+                }
+            }
+
             existingVendor.UpdatedAt = DateTime.UtcNow;
             existingVendor.UpdatedBy = _currentUserService.UserId;
 
             await _context.SaveChangesAsync();
-            return Result.Ok(true);
+            return Result.Ok(existingVendor);
         }
         catch (Exception ex)
         {
