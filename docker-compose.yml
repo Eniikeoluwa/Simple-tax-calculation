@@ -1,0 +1,40 @@
+services:
+  nova-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # Production environment configuration
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DATABASE_URL=User Id=postgres.jiujhbfpxfsibwysyxhe;Password=d3H%%i+8P@vpe$$pU;Server=aws-1-us-east-1.pooler.supabase.com;Port=5432;Database=postgres
+      - JWT_SECRET_KEY=Production-Super-Secret-JWT-Key-That-Is-At-Least-32-Characters-Long-For-Security
+      - JWT_ISSUER=NovaAPI
+      - JWT_AUDIENCE=NovaClients
+    # Comment out local postgres dependency since we're using external Supabase
+    # depends_on:
+    #   - postgres
+    networks:
+      - nova-network
+
+  # Comment out local postgres since we're using Supabase in production
+  # postgres:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: nova_local
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - nova-network
+
+volumes:
+  postgres_data:
+
+networks:
+  nova-network:
+    driver: bridge
