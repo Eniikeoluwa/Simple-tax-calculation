@@ -1,3 +1,5 @@
+# Note: You'll need to manually set the DATABASE_URL in Render dashboard
+# because it contains sensitive credentials that shouldn't be in version control
 services:
   - type: web
     name: nova-api
@@ -7,18 +9,10 @@ services:
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: nova-postgres
-          property: connectionString
+      # DATABASE_URL should be set manually in Render dashboard with your Supabase connection string
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: JWT_ISSUER
         value: NovaAPI
       - key: JWT_AUDIENCE
         value: NovaClients
-
-databases:
-  - name: nova-postgres
-    plan: starter
