@@ -30,11 +30,8 @@ public class UserService : BaseDataService, IUserService
             if (string.IsNullOrEmpty(tenantId))
                 return Result.Fail("User is not associated with any tenant");
 
-            var users = await _context.TenantUsers
-                .Include(tu => tu.User)
-                .Include(tu => tu.Tenant)
-                .Where(tu => tu.TenantId == tenantId)
-                .Select(tu => tu.User)
+            var users = await _context.Users
+                .Where(u => u.TenantId == tenantId)
                 .OrderBy(u => u.FirstName)
                 .ThenBy(u => u.LastName)
                 .ToListAsync();
@@ -43,7 +40,7 @@ public class UserService : BaseDataService, IUserService
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to get users: {ex.Message}");
+            return Result.Fail($"Failed to get users for tenant '{_currentUserService.TenantId}': {ex.Message}");
         }
     }
 
@@ -55,11 +52,8 @@ public class UserService : BaseDataService, IUserService
             if (string.IsNullOrEmpty(tenantId))
                 return Result.Fail("User is not associated with any tenant");
 
-            var user = await _context.TenantUsers
-                .Include(tu => tu.User)
-                .Include(tu => tu.Tenant)
-                .Where(tu => tu.TenantId == tenantId && tu.UserId == userId)
-                .Select(tu => tu.User)
+            var user = await _context.Users
+                .Where(u => u.Id == userId && u.TenantId == tenantId)
                 .FirstOrDefaultAsync();
 
             if (user == null)
