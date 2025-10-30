@@ -32,6 +32,7 @@ public class CreatePaymentCommandHandler : MediatR.IRequestHandler<CreatePayment
             Id = payment.Id,
             InvoiceNumber = payment.InvoiceNumber,
             GrossAmount = payment.GrossAmount,
+            TaxableAmount = payment.TaxableAmount,
             VatAmount = payment.VatAmount,
             WhtAmount = payment.WhtAmount,
             NetAmount = payment.NetAmount,
@@ -102,6 +103,14 @@ public class CreatePaymentCommandValidator : AbstractValidator<CreatePaymentComm
             .GreaterThan(0)
             .When(x => !x.request.IsPartialPayment)
             .WithMessage("Gross amount must be greater than 0 for full payments");
+
+        RuleFor(x => x.request.TaxableAmount)
+            .GreaterThanOrEqualTo(0)
+            .WithMessage("Taxable amount must be greater than or equal to 0");
+
+        RuleFor(x => x.request.TaxableAmount)
+            .LessThanOrEqualTo(x => x.request.GrossAmount)
+            .WithMessage("Taxable amount cannot be greater than gross amount");
 
         RuleFor(x => x.request.Description)
             .NotEmpty()
