@@ -4,6 +4,7 @@ public class CreatePaymentRequest
 {
     public string InvoiceNumber { get; set; } = string.Empty;
     public decimal GrossAmount { get; set; }
+    public decimal TaxableAmount { get; set; }
     public string Description { get; set; } = string.Empty;
     public string Reference { get; set; } = string.Empty;
     public DateTime InvoiceDate { get; set; }
@@ -22,6 +23,7 @@ public class PaymentResponse
     public string Id { get; set; } = string.Empty;
     public string InvoiceNumber { get; set; } = string.Empty;
     public decimal GrossAmount { get; set; }
+    public decimal TaxableAmount { get; set; } 
     public decimal VatAmount { get; set; }
     public decimal WhtAmount { get; set; }
     public decimal NetAmount { get; set; }
@@ -41,7 +43,6 @@ public class PaymentResponse
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     
-    // Two-Payment System Fields
     public decimal OriginalInvoiceAmount { get; set; }
     public decimal PaymentAmount { get; set; }
     public decimal PaymentPercentage { get; set; }
@@ -51,7 +52,6 @@ public class PaymentResponse
     public decimal TotalAmountPaid { get; set; }
     public decimal RemainingBalance { get; set; }
     
-    // Related entities
     public VendorInfo? Vendor { get; set; }
     public UserInfo? CreatedByUser { get; set; }
     public UserInfo? ApprovedByUser { get; set; }
