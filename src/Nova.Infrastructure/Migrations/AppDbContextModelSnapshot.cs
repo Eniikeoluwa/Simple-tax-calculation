@@ -388,6 +388,9 @@ namespace Nova.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal>("TaxableAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("TenantId")
                         .IsRequired()
                         .HasColumnType("character varying(50)");
