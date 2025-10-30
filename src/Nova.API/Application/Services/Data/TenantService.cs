@@ -7,8 +7,8 @@ using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Services.Data;
 
-    public interface ITenantService
-    {
+public interface ITenantService
+{
     Task<Result<Tenant>> CreateTenantAsync(CreateTenantRequest request, string? createdBy = null);
     Task<Result<Tenant>> GetTenantByIdAsync(string tenantId);
     Task<Result<List<Tenant>>> GetAllTenantsAsync();
