@@ -83,17 +83,14 @@ public class PaymentService : BaseDataService, IPaymentService
 
     private async Task<Result<Payment>> CreatePartialPaymentAsync(CreatePaymentRequest request, Vendor vendor, string currentUser)
     {
-        // Validate partial payment percentage
         if (request.PartialPercentage <= 0 || request.PartialPercentage >= 100)
             return Result.Fail("Partial payment percentage must be between 1 and 99");
 
         if (!request.IsFinalPayment)
         {
-            // First partial payment (50% or 70%)
             if (request.PartialPercentage != 50 && request.PartialPercentage != 70)
                 return Result.Fail("First partial payment must be either 50% or 70%");
 
-            // Check for duplicate invoice numbers
             var existingPayment = await _context.Payments
                 .FirstOrDefaultAsync(p => p.InvoiceNumber.ToLower() == request.InvoiceNumber.ToLower()
                                     && p.TenantId == TenantId);
@@ -114,8 +111,7 @@ public class PaymentService : BaseDataService, IPaymentService
                 CreatedByUserId = currentUser,
                 CreatedBy = currentUser,
                 UpdatedBy = currentUser,
-
-                // Apply vendor's tax configuration
+                TaxableAmount = request.TaxableAmount,
                 AppliedTaxType = vendor.TaxType,
                 AppliedVatRate = vendor.VatRate,
                 AppliedWhtRate = vendor.WhtRate
@@ -163,6 +159,7 @@ public class PaymentService : BaseDataService, IPaymentService
                 CreatedBy = currentUser,
                 UpdatedBy = currentUser,
                 ParentPaymentId = request.FirstPaymentId,
+                TaxableAmount = request.TaxableAmount, // Set the taxable amount
 
                 // Apply vendor's tax configuration
                 AppliedTaxType = vendor.TaxType,
@@ -186,7 +183,6 @@ public class PaymentService : BaseDataService, IPaymentService
 
     private async Task<Payment> CreateFullPaymentAsync(CreatePaymentRequest request, Vendor vendor, string currentUser, string tenantId)
     {
-        // Check if invoice number already exists for this tenant
         var existingPayment = await _context.Payments
             .FirstOrDefaultAsync(p => p.InvoiceNumber.ToLower() == request.InvoiceNumber.ToLower()
                                 && p.TenantId == TenantId);
@@ -197,7 +193,8 @@ public class PaymentService : BaseDataService, IPaymentService
         var payment = new Payment
         {
             InvoiceNumber = request.InvoiceNumber,
-            GrossAmount = request.GrossAmount, // This is the invoice amount before tax deductions
+            GrossAmount = request.GrossAmount,
+            TaxableAmount = request.TaxableAmount, 
             Description = request.Description,
             Reference = request.Reference,
             InvoiceDate = DateTimeHelper.EnsureUtc(request.InvoiceDate),
@@ -209,19 +206,15 @@ public class PaymentService : BaseDataService, IPaymentService
             CreatedBy = currentUser,
             UpdatedBy = currentUser,
 
-            // For full payments, set amounts
             OriginalInvoiceAmount = request.GrossAmount,
             PaymentAmount = request.GrossAmount,
             TotalAmountPaid = request.GrossAmount,
 
-            // Apply vendor's tax configuration
             AppliedTaxType = vendor.TaxType,
             AppliedVatRate = vendor.VatRate,
             AppliedWhtRate = vendor.WhtRate
         };
 
-        // Calculate VAT, WHT, and Net Amount (this will deduct taxes from GrossAmount)
-        // After this call: NetAmount = GrossAmount - VatAmount - WhtAmount
         payment.CalculateNetAmount();
 
         return payment;
@@ -322,7 +315,6 @@ public class PaymentService : BaseDataService, IPaymentService
 
             var payment = paymentResult.Value;
 
-            // Only allow deletion if payment is still pending
             if (payment.Status != "Pending")
                 return Result.Fail("Only pending payments can be deleted");
 
