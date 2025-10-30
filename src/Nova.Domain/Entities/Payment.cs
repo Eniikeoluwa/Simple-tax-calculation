@@ -4,6 +4,7 @@ public class Payment : BaseEntity
 {
     public string InvoiceNumber { get; set; }
     public decimal GrossAmount { get; set; }
+    public decimal TaxableAmount { get; set; }
     public decimal VatAmount { get; set; }
     public decimal WhtAmount { get; set; }
     public decimal NetAmount { get; set; }
@@ -15,18 +16,18 @@ public class Payment : BaseEntity
     public DateTime InvoiceDate { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime? PaymentDate { get; set; }
-    public string Status { get; set; } 
+    public string Status { get; set; }
     public string Remarks { get; set; }
     public string VendorId { get; set; }
     public string? BulkScheduleId { get; set; }
     public string TenantId { get; set; }
     public string CreatedByUserId { get; set; }
 
-    public decimal OriginalInvoiceAmount { get; set; } 
-    public decimal PaymentAmount { get; set; } 
-    public bool IsPartialPayment { get; set; } 
-    public bool IsFinalPayment { get; set; } 
-    public string? ParentPaymentId { get; set; } 
+    public decimal OriginalInvoiceAmount { get; set; }
+    public decimal PaymentAmount { get; set; }
+    public bool IsPartialPayment { get; set; }
+    public bool IsFinalPayment { get; set; }
+    public string? ParentPaymentId { get; set; }
     public decimal TotalAmountPaid { get; set; }
 
     public virtual Tenant Tenant { get; set; }
@@ -44,54 +45,61 @@ public class Payment : BaseEntity
     {
         if (IsPartialPayment && !IsFinalPayment)
         {
-            // For first partial payments, no tax deductions applied yet
             VatAmount = 0;
             WhtAmount = 0;
-            NetAmount = PaymentAmount; // Net equals payment amount (no deductions)
+            NetAmount = PaymentAmount;
         }
         else if (IsFinalPayment)
         {
-            // For final payments, calculate tax from original invoice amount and deduct from this payment
-            var originalVatAmount = HasVatApplied ? OriginalInvoiceAmount * (AppliedVatRate / 100) : 0;
-            var originalWhtAmount = HasWhtApplied ? OriginalInvoiceAmount * (AppliedWhtRate / 100) : 0;
-            
+            var originalVatAmount = HasVatApplied ? TaxableAmount * (AppliedVatRate / 100) : 0;
+            var originalWhtAmount = HasWhtApplied ? TaxableAmount * (AppliedWhtRate / 100) : 0;
+
             VatAmount = originalVatAmount;
             WhtAmount = originalWhtAmount;
-            // Deduct all taxes from the final payment amount
-            NetAmount = PaymentAmount - VatAmount - WhtAmount;
+            NetAmount = GrossAmount - VatAmount - WhtAmount;
         }
         else
         {
-            // For full payments (non-partial), calculate taxes and deduct from gross amount
-            VatAmount = HasVatApplied ? GrossAmount * (AppliedVatRate / 100) : 0;
-            WhtAmount = HasWhtApplied ? GrossAmount * (AppliedWhtRate / 100) : 0;
-            // NetAmount is what vendor receives after tax deductions
+            VatAmount = HasVatApplied ? TaxableAmount * (AppliedVatRate / 100) : 0;
+            WhtAmount = HasWhtApplied ? TaxableAmount * (AppliedWhtRate / 100) : 0;
             NetAmount = GrossAmount - VatAmount - WhtAmount;
         }
     }
 
     public Payment()
     {
+        InvoiceNumber = string.Empty;
+        Description = string.Empty;
+        Reference = string.Empty;
+        Remarks = string.Empty;
+        VendorId = string.Empty;
+        TenantId = string.Empty;
+        CreatedByUserId = string.Empty;
         Status = "Pending";
         AppliedTaxType = "Both";
         IsPartialPayment = false;
         IsFinalPayment = false;
         TotalAmountPaid = 0;
         ChildPayments = new HashSet<Payment>();
+        Tenant = null!;
+        Vendor = null!;
+        BulkSchedule = null!;
+        CreatedByUser = null!;
+        ParentPayment = null!;
     }
-    
+
     // Helper methods for two-payment system
     public decimal GetRemainingBalance()
     {
         return OriginalInvoiceAmount - TotalAmountPaid;
     }
-    
+
     public decimal GetRemainingPercentage()
     {
         if (OriginalInvoiceAmount == 0) return 0;
         return GetRemainingBalance() / OriginalInvoiceAmount * 100;
     }
-    
+
     public void SetAsFirstPartialPayment(decimal grossAmount, decimal percentage)
     {
         OriginalInvoiceAmount = grossAmount;
@@ -99,13 +107,13 @@ public class Payment : BaseEntity
         TotalAmountPaid = PaymentAmount;
         IsPartialPayment = true;
         IsFinalPayment = false;
-        GrossAmount = PaymentAmount; 
+        GrossAmount = PaymentAmount;
     }
-    
+
     public void SetAsFinalPayment(decimal grossAmount, decimal firstPaymentAmount)
     {
         OriginalInvoiceAmount = grossAmount;
-        PaymentAmount = grossAmount - firstPaymentAmount; 
+        PaymentAmount = grossAmount - firstPaymentAmount;
         TotalAmountPaid = grossAmount;
         IsPartialPayment = true;
         IsFinalPayment = true;
