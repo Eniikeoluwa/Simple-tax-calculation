@@ -66,8 +66,8 @@ public class BulkScheduleController : BaseController
     [HttpGet("{bulkScheduleId}/export/csv")]
     public async Task<IActionResult> ExportBulkScheduleToCsv(string bulkScheduleId)
     {
-        var query = new ExportBulkScheduleToCsvQuery(bulkScheduleId);
-        var result = await SendQuery<ExportBulkScheduleToCsvQuery, BulkScheduleExportResponse>(query);
+        var command = new ExportBulkScheduleCommand(bulkScheduleId);
+        var result = await SendCommand<ExportBulkScheduleCommand, BulkScheduleExportResponse>(command);
 
         if (result.Result is OkObjectResult okResult && okResult.Value is BulkScheduleExportResponse exportData)
         {
