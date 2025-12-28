@@ -20,7 +20,6 @@ public class UpdateBankCommandHandler : IRequestHandler<UpdateBankCommand, Resul
 
     public async Task<Result<BankResponse>> Handle(UpdateBankCommand request, CancellationToken cancellationToken)
     {
-        // Delegate update logic to the service - handler should not construct or manipulate domain entities
         var updateResult = await _bankService.UpdateBankAsync(request.request);
         if (updateResult.IsFailed)
             return Result.Fail(updateResult.Errors);
@@ -64,7 +63,6 @@ public class UpdateBankCommandValidator : AbstractValidator<UpdateBankCommand>
             .MaximumLength(50)
             .WithMessage("Bank code must not exceed 50 characters");
 
-        // Ensure at least sort code or code is provided for uniqueness
         RuleFor(x => x.request)
             .Must(x => !string.IsNullOrEmpty(x.SortCode) || !string.IsNullOrEmpty(x.Code))
             .WithMessage("Either sort code or bank code must be provided");
