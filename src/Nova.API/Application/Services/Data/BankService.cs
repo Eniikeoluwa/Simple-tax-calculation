@@ -29,7 +29,6 @@ public class BankService : BaseDataService, IBankService
     {
         try
         {
-            // Check if bank with same name and sort code already exists
             var existingBank = await _context.Banks
                 .FirstOrDefaultAsync(b => b.Name.ToLower() == request.Name.ToLower() 
                     && b.SortCode.ToLower() == request.SortCode.ToLower() 
@@ -89,7 +88,6 @@ public class BankService : BaseDataService, IBankService
             if (string.IsNullOrWhiteSpace(request.Name))
                 return Result.Fail("Bank name is required");
 
-            // Try to find existing bank first
             var existingBank = await _context.Banks
                 .FirstOrDefaultAsync(b => b.Name.ToLower() == request.Name.ToLower()
                     && b.SortCode.ToLower() == request.SortCode.ToLower()
@@ -98,7 +96,6 @@ public class BankService : BaseDataService, IBankService
             if (existingBank != null)
                 return Result.Ok(existingBank);
 
-            // Create new bank if not found
             return await CreateBankAsync(request);
         }
         catch (Exception ex)
