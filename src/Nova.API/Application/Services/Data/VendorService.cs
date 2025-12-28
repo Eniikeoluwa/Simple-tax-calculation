@@ -37,24 +37,20 @@ public class VendorService : BaseDataService, IVendorService
 
             var currentUser = _currentUserService.UserId;
 
-            // Check if vendor with same name exists in the tenant
             var existingVendor = await _context.Vendors
                 .FirstOrDefaultAsync(v => v.Name.ToLower() == request.Name.ToLower() && v.TenantId == tenantId);
 
             if (existingVendor != null)
                 return Result.Fail("A vendor with this name already exists in this tenant");
 
-            // Validate tenant exists
             var tenant = await _context.Tenants.FindAsync(tenantId);
             if (tenant == null)
                 return Result.Fail("Tenant not found");
 
             string bankId = request.BankId;
             
-            // Handle bank creation or finding
             if (!string.IsNullOrEmpty(request.BankName))
             {
-                // Create or find bank using the provided bank details
                 var bankCreateRequest = new Nova.Contracts.Models.CreateBankRequest
                 {
                     Name = request.BankName,
@@ -70,12 +66,10 @@ public class VendorService : BaseDataService, IVendorService
             }
             else if (!string.IsNullOrEmpty(request.BankId))
             {
-                // Validate existing bank if BankId is provided
                 var bankResult = await _bankService.GetBankByIdAsync(request.BankId);
                 if (bankResult.IsFailed)
                     return Result.Fail("Bank not found");
             }
-            // If neither BankId nor BankName is provided, bankId will remain null/empty
 
             var vendor = new Vendor
             {
@@ -166,12 +160,10 @@ public class VendorService : BaseDataService, IVendorService
             if (existingVendor == null)
                 return Result.Fail("Vendor not found");
 
-            // Ensure vendor belongs to current tenant
             var tenantId = _currentUserService.TenantId;
             if (!string.IsNullOrEmpty(tenantId) && existingVendor.TenantId != tenantId)
                 return Result.Fail("Vendor not found in current tenant");
 
-            // Update properties (only if provided in request)
             if (!string.IsNullOrEmpty(request.Name))
                 existingVendor.Name = request.Name;
             if (!string.IsNullOrEmpty(request.Code))
@@ -199,7 +191,6 @@ public class VendorService : BaseDataService, IVendorService
             if (request.IsActive.HasValue)
                 existingVendor.IsActive = request.IsActive.Value;
 
-            // Handle bank creation if BankId is not provided but bank details are
             if (string.IsNullOrEmpty(request.BankId) && !string.IsNullOrEmpty(request.BankName))
             {
                 var bankCreateRequest = new Nova.Contracts.Models.CreateBankRequest
