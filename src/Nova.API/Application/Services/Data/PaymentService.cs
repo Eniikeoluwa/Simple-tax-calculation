@@ -117,17 +117,13 @@ public class PaymentService : BaseDataService, IPaymentService
                 AppliedWhtRate = vendor.WhtRate
             };
 
-            // Set as first partial payment
             payment.SetAsFirstPartialPayment(request.GrossAmount, request.PartialPercentage);
-
-            // Calculate net amount (no tax deductions for first payment)
             payment.CalculateNetAmount();
 
             return Result.Ok(payment);
         }
         else
         {
-            // Final payment (remaining 30% or 50%)
             if (string.IsNullOrEmpty(request.FirstPaymentId))
                 return Result.Fail("FirstPaymentId is required for final payments");
 
@@ -140,7 +136,6 @@ public class PaymentService : BaseDataService, IPaymentService
             if (firstPayment.IsFinalPayment)
                 return Result.Fail("The referenced payment is already marked as final");
 
-            // Validate the percentage matches the remaining amount
             var expectedRemainingPercentage = 100 - (firstPayment.PaymentAmount / firstPayment.OriginalInvoiceAmount * 100);
             if (Math.Abs(request.PartialPercentage - expectedRemainingPercentage) > 0.01m)
                 return Result.Fail($"Final payment percentage should be {expectedRemainingPercentage:F1}% (remaining amount)");
@@ -282,12 +277,10 @@ public class PaymentService : BaseDataService, IPaymentService
 
             var payment = paymentResult.Value;
 
-            // Validate status transition
             var validStatuses = new[] { "Pending", "Processed", "Paid", "Cancelled" };
             if (!validStatuses.Contains(request.Status))
                 return Result.Fail($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}");
 
-            // Update payment status
             payment.Status = request.Status;
             payment.Remarks = request.Remarks ?? payment.Remarks;
             payment.PaymentDate = DateTimeHelper.EnsureUtc(request.PaymentDate) ?? payment.PaymentDate;
