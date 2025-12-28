@@ -153,8 +153,6 @@ public class AuthService : BaseDataService, IAuthService
 
     public async Task<Result> CreatePasswordResetTokenAsync(string userId, string token, DateTime expiresAt)
     {
-        // For simplicity, we'll store password reset tokens in the RefreshTokens table with a special prefix
-        // In a production app, you might want a separate table
         var resetToken = new RefreshToken
         {
             Id = Guid.NewGuid().ToString(),
@@ -207,7 +205,6 @@ public class AuthService : BaseDataService, IAuthService
     user.PasswordHash = await HashPassword(newPassword);
         user.UpdatedAt = DateTime.UtcNow;
 
-        // Revoke all refresh tokens and reset tokens for this user
         var tokensToRevoke = await _context.RefreshTokens
             .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
             .ToListAsync();
