@@ -11,9 +11,9 @@ public class BulkSchedule : BaseEntity
     public int PaymentCount { get; set; }
     public DateTime ScheduledDate { get; set; }
     public DateTime? ProcessedDate { get; set; }
-    public DateTime StartDate { get; set; }  // Start of the date range for payments
-    public DateTime EndDate { get; set; }    // End of the date range for payments
-    public string Status { get; set; } // Draft, Pending, Approved, Processed, Completed, Rejected, Cancelled
+    public DateTime StartDate { get; set; } 
+    public DateTime EndDate { get; set; }   
+    public string Status { get; set; } 
     public string Remarks { get; set; } = null!;
     public string TenantId { get; set; } = null!;
     public string CreatedByUserId { get; set; } = null!;
