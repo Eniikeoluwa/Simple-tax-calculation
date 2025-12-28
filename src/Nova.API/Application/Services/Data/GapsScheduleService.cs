@@ -34,7 +34,6 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
             if (string.IsNullOrEmpty(TenantId))
                 return Result.Fail("User is not associated with any tenant");
 
-            // Get the bulk schedule with its payments
             var bulkSchedule = await _context.BulkSchedules
                 .Include(bs => bs.Payments)
                 .ThenInclude(p => p.Vendor)
@@ -44,15 +43,13 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
 
-            // Only approved bulk schedules can generate GAPS schedules
             if (bulkSchedule.Status != "Approved")
                 return Result.Fail($"Only approved bulk schedules can be used to generate GAPS schedule. Current status: {bulkSchedule.Status}. Please approve the bulk schedule first.");
 
-            // Check if payments are linked to this bulk schedule
             if (!bulkSchedule.Payments.Any())
                 return Result.Fail("No payments are linked to this bulk schedule. Please ensure payments are properly associated with the bulk schedule.");
 
-            // Generate batch number
+
             var batchNumber = $"GAPS-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
             var gapsSchedules = new List<GapsSchedule>();
 
@@ -94,10 +91,9 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
             _context.GapsSchedules.AddRange(gapsSchedules);
             await _context.SaveChangesAsync();
 
-            // Create the grouped response
             var response = new GapsScheduleResponse
             {
-                Id = batchNumber, // Use batch number as the main ID
+                Id = batchNumber, 
                 BatchNumber = batchNumber,
                 TotalPaymentAmount = gapsSchedules.Sum(gs => gs.PaymentAmount),
                 PaymentDate = request.PaymentDate,
@@ -148,7 +144,7 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
                 .GroupBy(gs => gs.BatchNumber)
                 .Select(g => new GapsScheduleListResponse
                 {
-                    Id = g.Key, // Use batch number as ID
+                    Id = g.Key, 
                     BatchNumber = g.Key,
                     TotalPaymentAmount = g.Sum(gs => gs.PaymentAmount),
                     PaymentDate = g.First().PaymentDate,
@@ -242,7 +238,6 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("GAPS Schedule");
 
-            // Add headers
             worksheet.Cell(1, 1).Value = "Payment Amount";
             worksheet.Cell(1, 2).Value = "Payment Date";
             worksheet.Cell(1, 3).Value = "Reference";
@@ -252,7 +247,6 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
             worksheet.Cell(1, 7).Value = "Account Number";
             worksheet.Cell(1, 8).Value = "Bank Sort Code";
 
-            // Add data
             var row = 2;
             foreach (var gaps in gapsSchedules)
             {
@@ -267,10 +261,8 @@ public class GapsScheduleService : BaseDataService, IGapsScheduleService
                 row++;
             }
 
-            // Format columns
             worksheet.Columns().AdjustToContents();
 
-            // Convert to byte array
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
             var content = stream.ToArray();
