@@ -59,7 +59,6 @@ public class CreateBankCommandValidator : AbstractValidator<CreateBankCommand>
             .MaximumLength(50)
             .WithMessage("Bank code must not exceed 50 characters");
 
-        // Ensure at least sort code or code is provided for uniqueness
         RuleFor(x => x.request)
             .Must(x => !string.IsNullOrEmpty(x.SortCode) || !string.IsNullOrEmpty(x.Code))
             .WithMessage("Either sort code or bank code must be provided");
