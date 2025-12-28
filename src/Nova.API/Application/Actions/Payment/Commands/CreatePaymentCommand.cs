@@ -50,8 +50,6 @@ public class CreatePaymentCommandHandler : MediatR.IRequestHandler<CreatePayment
             CreatedByUserId = payment.CreatedByUserId,
             CreatedAt = payment.CreatedAt,
             UpdatedAt = payment.UpdatedAt,
-            
-            // Two-payment system fields
             OriginalInvoiceAmount = payment.OriginalInvoiceAmount,
             PaymentAmount = payment.PaymentAmount,
             PaymentPercentage = payment.OriginalInvoiceAmount > 0 ? (payment.PaymentAmount / payment.OriginalInvoiceAmount * 100) : 0,
