@@ -10,7 +10,7 @@ public class Payment : BaseEntity
     public decimal NetAmount { get; set; }
     public string Description { get; set; }
     public string Reference { get; set; }
-    public string AppliedTaxType { get; set; } // "None", "VAT", "WHT", "Both"
+    public string AppliedTaxType { get; set; } 
     public decimal AppliedVatRate { get; set; }
     public decimal AppliedWhtRate { get; set; }
     public DateTime InvoiceDate { get; set; }
@@ -88,7 +88,6 @@ public class Payment : BaseEntity
         ParentPayment = null!;
     }
 
-    // Helper methods for two-payment system
     public decimal GetRemainingBalance()
     {
         return OriginalInvoiceAmount - TotalAmountPaid;
