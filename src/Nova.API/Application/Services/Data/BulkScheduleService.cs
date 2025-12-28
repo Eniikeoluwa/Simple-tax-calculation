@@ -42,13 +42,11 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (string.IsNullOrEmpty(UserId))
                 return Result.Fail("User not authenticated");
 
-            // Validate date range
             if (request.StartDate > request.EndDate)
                 return Result.Fail("Start date cannot be later than end date");
 
-            // Get all approved payments created in the date range for the current tenant
             var startDateUtc = DateTimeHelper.EnsureUtc(request.StartDate);
-            var endDateUtc = DateTimeHelper.EnsureUtc(request.EndDate).AddDays(1).AddTicks(-1); // Include full end date
+            var endDateUtc = DateTimeHelper.EnsureUtc(request.EndDate).AddDays(1).AddTicks(-1); 
             
             var payments = await _context.Payments
                 .Include(p => p.Vendor)
@@ -64,16 +62,13 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (!payments.Any())
                 return Result.Fail($"No approved payments found created between {request.StartDate:yyyy-MM-dd} and {request.EndDate:yyyy-MM-dd}");
 
-            // Calculate totals
             var totalGrossAmount = payments.Sum(p => p.GrossAmount);
             var totalVatAmount = payments.Sum(p => p.VatAmount);
             var totalWhtAmount = payments.Sum(p => p.WhtAmount);
             var totalNetAmount = payments.Sum(p => p.NetAmount);
 
-            // Generate batch number
             var batchNumber = await GenerateBatchNumberAsync();
 
-            // Create bulk schedule as a view/filter
             var bulkSchedule = new BulkSchedule
             {
                 BatchNumber = batchNumber,
@@ -84,20 +79,19 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 TotalNetAmount = totalNetAmount,
                 PaymentCount = payments.Count,
                 ScheduledDate = DateTimeHelper.EnsureUtc(DateTime.Now),
-                Status = "Pending", // Initial status, waiting for approval
+                Status = "Pending",
                 Remarks = request.Remarks ?? "",
                 TenantId = TenantId,
                 CreatedByUserId = UserId,
                 CreatedBy = UserId,
                 UpdatedBy = UserId,
-                StartDate = startDateUtc,    // Store the date range for future queries
+                StartDate = startDateUtc,  
                 EndDate = endDateUtc
             };
 
             _context.BulkSchedules.Add(bulkSchedule);
             await _context.SaveChangesAsync();
 
-            // Link all payments to this bulk schedule
             foreach (var payment in payments)
             {
                 payment.BulkScheduleId = bulkSchedule.Id;
@@ -107,7 +101,6 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
 
             await _context.SaveChangesAsync();
 
-            // Return the created bulk schedule with payments
             var response = new BulkScheduleResponse
             {
                 Id = bulkSchedule.Id,
@@ -277,12 +270,10 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
 
-            // Validate status transition
             var validStatuses = new[] { "Draft", "Pending", "Approved", "Processed", "Completed", "Rejected", "Cancelled" };
             if (!validStatuses.Contains(request.Status))
                 return Result.Fail($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}");
 
-            // Update status
             bulkSchedule.Status = request.Status;
             bulkSchedule.Remarks = request.Remarks ?? bulkSchedule.Remarks;
             bulkSchedule.UpdatedBy = UserId;
@@ -317,11 +308,9 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
 
-            // Only allow deletion if status is Draft
             if (bulkSchedule.Status != "Draft")
                 return Result.Fail("Only bulk schedules with 'Draft' status can be deleted");
 
-            // Remove bulk schedule reference from payments
             foreach (var payment in bulkSchedule.Payments)
             {
                 payment.BulkScheduleId = null;
@@ -353,11 +342,9 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
 
-            // Only allow approval of pending bulk schedules
             if (bulkSchedule.Status.ToLower() != "pending")
                 return Result.Fail($"Cannot approve bulk schedule in {bulkSchedule.Status} status. Only pending bulk schedules can be approved.");
 
-            // Update status to Approved
             bulkSchedule.Status = "Approved";
             bulkSchedule.Remarks = request.Remarks ?? bulkSchedule.Remarks;
             bulkSchedule.UpdatedBy = UserId;
@@ -365,11 +352,10 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             bulkSchedule.ApprovedByUserId = UserId;
             bulkSchedule.ApprovedDate = DateTime.UtcNow;
 
-            // Update payment statuses and ensure they're linked to the bulk schedule
             foreach (var payment in bulkSchedule.Payments)
             {
                 payment.Status = "Scheduled";
-                payment.BulkScheduleId = bulkSchedule.Id; // Ensure linkage
+                payment.BulkScheduleId = bulkSchedule.Id; 
                 payment.UpdatedBy = UserId;
                 payment.UpdatedAt = DateTime.UtcNow;
             }
@@ -401,16 +387,13 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
             if (bulkSchedule == null)
                 return Result.Fail("Bulk schedule not found");
 
-            // Only allow export of approved bulk schedules
             if (bulkSchedule.Status.ToLower() != "approved")
                 return Result.Fail("Only approved bulk schedules can be exported");
 
             var csv = new StringBuilder();
 
-            // Add headers
             csv.AppendLine("Account Details,Amount,VAT (7.5%),WHT (2%),Amount Payable,Narration");
 
-            // Add each payment as a row
             foreach (var payment in bulkSchedule.Payments.OrderBy(p => p.Vendor.Name))
             {
                 var accountDetails = $"{payment.Vendor.Name}\n{payment.Vendor.Bank?.Name ?? "N/A"}\n{payment.Vendor.Bank?.Code ?? "N/A"}";
@@ -420,7 +403,6 @@ public class BulkScheduleService : BaseDataService, IBulkScheduleService
                 csv.AppendLine($"\"{accountDetails}\",{payment.GrossAmount:N2},{vatAmount},{whtAmount},{payment.NetAmount:N2},\"{payment.Description}\"");
             }
 
-            // Add summary totals
             csv.AppendLine("");
             csv.AppendLine("Summary");
             csv.AppendLine($"Total Amount,{bulkSchedule.TotalGrossAmount:N2}");
