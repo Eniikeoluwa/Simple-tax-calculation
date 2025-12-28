@@ -34,7 +34,6 @@ public class ForgotPasswordCommandHandler : MediatR.IRequestHandler<ForgotPasswo
         if (createResetResult.IsFailed)
             return Result.Fail(createResetResult.Errors);
 
-        // In production you'd email the token. For now return success.
         return Result.Ok();
     }
 }
