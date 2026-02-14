@@ -7,6 +7,8 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
+public record ResetPasswordCommand(ResetPasswordRequest request) : MediatR.IRequest<Result<ResetPasswordResponse>>;
+
 public class ResetPasswordCommandHandler : MediatR.IRequestHandler<ResetPasswordCommand, Result<ResetPasswordResponse>>
 {
     private readonly IAuthService _authService;
@@ -18,23 +20,25 @@ public class ResetPasswordCommandHandler : MediatR.IRequestHandler<ResetPassword
 
     public async Task<Result<ResetPasswordResponse>> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        var validateResult = await _authService.ValidatePasswordResetTokenAsync(request.request);
-        if (validateResult.IsFailed)
-            return Result.Fail(validateResult.Errors);
+        var userResult = await _authService.ValidatePasswordResetTokenAsync(request.request);
+        if (userResult.IsFailed)
+            return Result.Fail(userResult.Errors);
 
-        var user = validateResult.Value;
+        var user = userResult.Value;
+        
         var updateResult = await _authService.UpdatePasswordAsync(user.Id, request.request.NewPassword);
         if (updateResult.IsFailed)
             return Result.Fail(updateResult.Errors);
 
-        return Result.Ok(new ResetPasswordResponse
+        var response = new ResetPasswordResponse
         {
             Success = true,
             Email = user.Email
-        });
+        };
+
+        return Result.Ok(response);
     }
 }
-public record ResetPasswordCommand(ResetPasswordRequest request) : MediatR.IRequest<Result<ResetPasswordResponse>>;
 
 public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
 {
