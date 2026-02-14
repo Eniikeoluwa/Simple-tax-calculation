@@ -1,182 +1,148 @@
-# Nova API - Docker Deployment Guide
+# Nova API
 
-This guide explains how to containerize and deploy the Nova API application to Render.
+A comprehensive payment and financial management API built with ASP.NET Core, designed to handle vendor management, payment processing, and scheduling operations for multi-tenant organizations.
 
-## Docker Setup
+## Overview
 
-The application has been containerized with the following files:
-- `Dockerfile` - Multi-stage Docker build configuration
-- `.dockerignore` - Excludes unnecessary files from Docker context
-- `docker-compose.yml` - Local development setup with PostgreSQL
-- `render.yaml` - Render deployment configuration
+Nova API is a multi-tenant financial management system that provides secure, scalable APIs for managing vendors, banks, payments, and scheduled payment operations. Built with modern .NET architecture using CQRS pattern with MediatR, the system ensures clean separation of concerns and maintainable code.
 
-## Local Development with Docker
+## Key Features
+
+### Authentication & Authorization
+- JWT-based authentication with access and refresh tokens
+- Secure user registration and login
+- Password reset functionality
+- Multi-tenant user isolation
+
+### Vendor Management
+- Create and manage vendor profiles
+- Link vendors to bank accounts
+- Track tax information (TIN, VAT, WHT)
+- Multi-tenant vendor isolation
+
+### Bank Management
+- Manage bank information and details
+- Bank account linking for vendors
+- Support for multiple banks per tenant
+
+### Payment Processing
+- Payment creation and tracking
+- Multiple payment methods support
+- Payment status management
+- Tenant-specific payment records
+
+### Scheduled Operations
+- Bulk payment scheduling
+- GAPS (Government Automated Payment System) scheduling
+- Automated payment processing
+- Schedule management and tracking
+
+### Tenant Management
+- Multi-tenant architecture
+- Tenant-specific data isolation
+- User-tenant associations
+- Tenant activation/deactivation
+
+## Tech Stack
+
+- **Framework**: ASP.NET Core 9.0
+- **Database**: PostgreSQL with Entity Framework Core
+- **Authentication**: JWT (JSON Web Tokens)
+- **Validation**: FluentValidation
+- **Pattern**: CQRS with MediatR
+- **Password Hashing**: BCrypt.NET
+- **Architecture**: Clean Architecture with Domain, Infrastructure, API, and Contracts layers
+
+## Project Structure
+
+```
+src/
+├── Nova.API/              # Web API layer (Controllers, Middleware)
+│   ├── Controllers/       # API endpoints
+│   ├── Application/       # Business logic (Commands, Queries, Services)
+│   └── Extensions/        # Extension methods
+├── Nova.Contracts/        # DTOs and Request/Response models
+├── Nova.Domain/           # Domain entities and business rules
+└── Nova.Infrastructure/   # Data access and external services
+```
+
+## Getting Started
 
 ### Prerequisites
-- Docker and Docker Compose installed
-- .NET 9.0 SDK (for local development without Docker)
+- .NET 9.0 SDK
+- PostgreSQL database
+- Your favorite IDE (Visual Studio, VS Code, Rider)
 
-### Running Locally with Docker Compose
+### Setup
 
-1. **Clone the repository** (if not already done)
+1. Clone the repository
    ```bash
-   git clone <your-repo-url>
-   cd novastart
+   git clone https://github.com/Eniikeoluwa/Novastart.git
+   cd Novastart
    ```
 
-2. **Build and run with Docker Compose**
+2. Configure environment variables (see `.env.example`)
    ```bash
-   docker-compose up --build
+   cp .env.example .env.local
+   # Edit .env.local with your database and JWT settings
    ```
 
-3. **Access the application**
-   - API: http://localhost:8080
-   - Health check: http://localhost:8080/health
-   - Swagger (if enabled): http://localhost:8080/swagger
-
-### Building Docker Image Manually
-
-```bash
-# Build the Docker image
-docker build -t nova-api .
-
-# Run the container
-docker run -p 8080:8080 \
-  -e DATABASE_URL="your-database-connection-string" \
-  -e JWT_SECRET_KEY="your-jwt-secret-key" \
-  nova-api
-```
-
-## Deploying to Render
-
-### Option 1: Using render.yaml (Recommended)
-
-1. **Push your code to GitHub** (if not already done)
-
-2. **Connect to Render**
-   - Go to [Render Dashboard](https://dashboard.render.com)
-   - Click "New" → "Blueprint"
-   - Connect your GitHub repository
-   - Render will automatically detect the `render.yaml` file
-
-3. **Configure Environment Variables** (if needed)
-   The `render.yaml` file includes basic configuration, but you may want to set:
-   - Custom JWT secret key
-   - Additional environment-specific settings
-
-### Option 2: Manual Render Setup
-
-1. **Create a Web Service**
-   - Go to Render Dashboard
-   - Click "New" → "Web Service"
-   - Connect your GitHub repository
-
-2. **Configure the Service**
-   - **Name**: nova-api
-   - **Environment**: Docker
-   - **Region**: Choose your preferred region
-   - **Branch**: main (or your deployment branch)
-   - **Dockerfile Path**: ./Dockerfile
-
-3. **Set Environment Variables**
-   ```
-   ASPNETCORE_ENVIRONMENT=Production
-   DATABASE_URL=[Your PostgreSQL connection string]
-   JWT_SECRET_KEY=[Generate a secure 32+ character key]
-   JWT_ISSUER=NovaAPI
-   JWT_AUDIENCE=NovaClients
+3. Run database migrations
+   ```bash
+   cd src/Nova.API
+   dotnet ef database update
    ```
 
-4. **Create PostgreSQL Database** (if needed)
-   - In Render Dashboard, click "New" → "PostgreSQL"
-   - Choose your plan and region
-   - Copy the connection string to your web service's `DATABASE_URL`
+4. Run the application
+   ```bash
+   dotnet run
+   ```
 
-### Environment Variables Reference
+5. Access the API at `http://localhost:8080`
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `ASPNETCORE_ENVIRONMENT` | Application environment | Yes | Production |
-| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
-| `JWT_SECRET_KEY` | JWT signing key (32+ chars) | Yes | - |
-| `JWT_ISSUER` | JWT token issuer | No | NovaAPI |
-| `JWT_AUDIENCE` | JWT token audience | No | NovaClients |
+## API Endpoints
 
-## Application Features
+### Authentication
+- `POST /api/auth/signup` - Register new user
+- `POST /api/auth/login` - User login
+- `POST /api/auth/refresh` - Refresh access token
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password
 
-### Health Check
-The application includes a health check endpoint at `/health` that returns:
-```json
-{
-  "status": "healthy",
-  "timestamp": "2025-10-26T12:00:00.000Z"
-}
-```
+### Vendors
+- `GET /api/vendors` - Get all vendors
+- `GET /api/vendors/{id}` - Get vendor by ID
+- `POST /api/vendors` - Create vendor
+- `PUT /api/vendors/{id}` - Update vendor
+- `DELETE /api/vendors/{id}` - Delete vendor
 
-### Security Features
-- JWT authentication
-- CORS policy configured
-- Production-ready configuration
-- Non-root user in Docker container
+### Banks
+- `GET /api/banks` - Get all banks
+- `POST /api/banks` - Create bank
+- `PUT /api/banks/{id}` - Update bank
 
-### Database
-- Uses PostgreSQL with Entity Framework Core
-- Supports Supabase or any PostgreSQL provider
-- Connection string configurable via environment variables
+### Payments
+- `GET /api/payments` - Get all payments
+- `GET /api/payments/{id}` - Get payment by ID
+- `POST /api/payments` - Create payment
+- `PUT /api/payments/{id}` - Update payment
 
-## Troubleshooting
+### Tenants
+- `GET /api/tenants` - Get all tenants
+- `POST /api/tenants` - Create tenant
 
-### Common Issues
+## Security
 
-1. **Database Connection Issues**
-   - Verify `DATABASE_URL` format
-   - Ensure database server is accessible
-   - Check firewall settings
+- JWT tokens with configurable expiration
+- Secure password hashing with BCrypt
+- Multi-tenant data isolation
+- Environment variable configuration for sensitive data
+- CORS policy for controlled access
 
-2. **JWT Configuration Issues**
-   - Ensure `JWT_SECRET_KEY` is at least 32 characters
-   - Verify issuer and audience configuration
+## Contributing
 
-3. **Docker Build Issues**
-   - Check `.dockerignore` includes necessary files
-   - Verify all project references are correct
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Viewing Logs
+## License
 
-**Local Docker:**
-```bash
-docker-compose logs nova-api
-```
-
-**Docker container:**
-```bash
-docker logs <container-name>
-```
-
-**Render:**
-- View logs in the Render Dashboard under your service
-
-## Production Considerations
-
-1. **Security**
-   - Use strong JWT secret keys
-   - Configure CORS for your specific domains
-   - Enable HTTPS (handled by Render)
-
-2. **Database**
-   - Use connection pooling
-   - Configure appropriate timeout settings
-   - Consider database backup strategies
-
-3. **Monitoring**
-   - Use the health check endpoint for monitoring
-   - Set up logging aggregation
-   - Monitor application metrics
-
-## Support
-
-For deployment issues:
-1. Check the application logs
-2. Verify environment variable configuration
-3. Test the Docker image locally first
-4. Consult Render documentation for platform-specific issues
+This project is licensed under the MIT License.
