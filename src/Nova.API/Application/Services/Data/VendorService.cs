@@ -51,7 +51,7 @@ public class VendorService : BaseDataService, IVendorService
             
             if (!string.IsNullOrEmpty(request.BankName))
             {
-                var bankCreateRequest = new Nova.Contracts.Models.CreateBankRequest
+                var bankCreateRequest = new CreateBankRequest
                 {
                     Name = request.BankName,
                     SortCode = request.BankSortCode,
@@ -193,7 +193,7 @@ public class VendorService : BaseDataService, IVendorService
 
             if (string.IsNullOrEmpty(request.BankId) && !string.IsNullOrEmpty(request.BankName))
             {
-                var bankCreateRequest = new Nova.Contracts.Models.CreateBankRequest
+                var bankCreateRequest = new CreateBankRequest
                 {
                     Name = request.BankName,
                     SortCode = request.BankSortCode ?? string.Empty,
