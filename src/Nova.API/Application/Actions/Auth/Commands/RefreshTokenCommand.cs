@@ -7,6 +7,8 @@ using FluentValidation;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
+public record RefreshTokenCommand(RefreshTokenRequest request) : MediatR.IRequest<Result<TokenResponse>>;
+
 public class RefreshTokenCommandHandler : MediatR.IRequestHandler<RefreshTokenCommand, Result<TokenResponse>>
 {
     private readonly IAuthService _authService;
@@ -20,47 +22,43 @@ public class RefreshTokenCommandHandler : MediatR.IRequestHandler<RefreshTokenCo
 
     public async Task<Result<TokenResponse>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        var validator = new RefreshTokenCommandValidator();
-        var validation = validator.Validate(request);
-        if (!validation.IsValid)
-            return Result.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage)));
+        var tokenResult = await _authService.GetRefreshTokenAsync(request.request);
+        if (tokenResult.IsFailed)
+            return Result.Fail(tokenResult.Errors);
 
-    var existingRtResult = await _authService.GetRefreshTokenAsync(request.request);
-        if (existingRtResult.IsFailed)
-            return Result.Fail(existingRtResult.Errors);
-
-        var existingRt = existingRtResult.Value;
-        if (existingRt.IsExpired || existingRt.IsRevoked)
+        var existingToken = tokenResult.Value;
+        if (existingToken.IsExpired || existingToken.IsRevoked)
             return Result.Fail("Invalid refresh token");
 
-        var user = existingRt.User;
+        var user = existingToken.User;
         if (user == null)
             return Result.Fail("Associated user not found");
 
-        await _authService.RevokeRefreshTokenAsync(existingRt.Token);
+        await _authService.RevokeRefreshTokenAsync(existingToken.Token);
 
         var newAccessToken = _tokenService.GenerateAccessToken(user);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
         var refreshTokenExpiry = _tokenService.GetRefreshTokenExpiryDate();
 
-        var createRtResult = await _authService.CreateRefreshTokenAsync(user.Id, newRefreshToken, refreshTokenExpiry);
-        if (createRtResult.IsFailed)
-            return Result.Fail(createRtResult.Errors);
+        var createResult = await _authService.CreateRefreshTokenAsync(user.Id, newRefreshToken, refreshTokenExpiry);
+        if (createResult.IsFailed)
+            return Result.Fail(createResult.Errors);
 
-        return Result.Ok(new TokenResponse
+        var response = new TokenResponse
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15)
-        });
+        };
+
+        return Result.Ok(response);
     }
 }
-public record RefreshTokenCommand(RefreshTokenRequest request) : MediatR.IRequest<Result<TokenResponse>>;
 
-    public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
+public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
+{
+    public RefreshTokenCommandValidator()
     {
-        public RefreshTokenCommandValidator()
-        {
-            RuleFor(x => x.request.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
-        }
+        RuleFor(x => x.request.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
     }
+}
