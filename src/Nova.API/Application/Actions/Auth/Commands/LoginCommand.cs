@@ -7,6 +7,8 @@ using MediatR;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
 
+public record LoginCommand(LoginRequest request) : MediatR.IRequest<Result<AuthResponse>>;
+
 public class LoginCommandHandler : MediatR.IRequestHandler<LoginCommand, Result<AuthResponse>>
 {
     private readonly IAuthService _authService;
@@ -20,11 +22,6 @@ public class LoginCommandHandler : MediatR.IRequestHandler<LoginCommand, Result<
 
     public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var validator = new LoginCommandValidator();
-        var validation = validator.Validate(request);
-        if (!validation.IsValid)
-            return Result.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage)));
-
         var userResult = await _authService.ValidateUserAsync(request.request);
         if (userResult.IsFailed)
             return Result.Fail(userResult.Errors);
@@ -39,7 +36,7 @@ public class LoginCommandHandler : MediatR.IRequestHandler<LoginCommand, Result<
         if (refreshTokenResult.IsFailed)
             return Result.Fail(refreshTokenResult.Errors);
 
-        return Result.Ok(new AuthResponse
+        var response = new AuthResponse
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
@@ -48,15 +45,17 @@ public class LoginCommandHandler : MediatR.IRequestHandler<LoginCommand, Result<
             FullName = user.FullName,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15),
             TenantId = user.TenantId
-        });
+        };
+
+        return Result.Ok(response);
     }
 }
-public record LoginCommand(LoginRequest request) : MediatR.IRequest<Result<AuthResponse>>;
-    public class LoginCommandValidator : AbstractValidator<LoginCommand>
+
+public class LoginCommandValidator : AbstractValidator<LoginCommand>
+{
+    public LoginCommandValidator()
     {
-        public LoginCommandValidator()
-        {
-            RuleFor(x => x.request.Email).NotEmpty().WithMessage("Email is required.").EmailAddress().WithMessage("Invalid email format.");
-            RuleFor(x => x.request.Password).NotEmpty().WithMessage("Password is required.");
-        }
+        RuleFor(x => x.request.Email).NotEmpty().WithMessage("Email is required.").EmailAddress().WithMessage("Invalid email format.");
+        RuleFor(x => x.request.Password).NotEmpty().WithMessage("Password is required.");
     }
+}
