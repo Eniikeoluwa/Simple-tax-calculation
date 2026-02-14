@@ -70,6 +70,15 @@ node_modules/
 # dotenv environment variables file
 .env
 .env.*
+.env.local
+.env.production
+
+# Sensitive configuration files with credentials
+**/appsettings.json
+**/appsettings.*.json
+**/appsettings.Production.json
+**/appsettings.Development.json
+**/appsettings.Staging.json
 
 # Entity Framework migration files build artifacts
 **/Migrations/*-snapshot.cs
