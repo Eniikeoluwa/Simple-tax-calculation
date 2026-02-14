@@ -21,7 +21,7 @@ docker run --rm -d \
   -e JWT_SECRET_KEY="test-secret-key-that-is-at-least-32-characters-long" \
   nova-api:latest
 
-echo "⏳ Waiting for container to start..."
+echo "Waiting for container to start..."
 sleep 5
 
 # Check if the health endpoint responds
@@ -33,7 +33,7 @@ else
 fi
 
 # Clean up
-echo "🧹 Cleaning up test container..."
+echo "Cleaning up test container..."
 docker stop nova-api-test
 
 echo "Build and test completed!"
