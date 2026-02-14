@@ -1,4 +1,3 @@
-
 using FluentResults;
 using Nova.API.Application.Services.Common;
 using MediatR;
@@ -7,6 +6,8 @@ using Nova.API.Application.Services.Data;
 using Nova.Contracts.Models;
 
 namespace Nova.API.Application.Actions.Auth.Commands;
+
+public record ForgotPasswordCommand(ForgotPasswordRequest request) : MediatR.IRequest<Result<ForgotPasswordResponse>>;
 
 public class ForgotPasswordCommandHandler : MediatR.IRequestHandler<ForgotPasswordCommand, Result<ForgotPasswordResponse>>
 {
@@ -30,22 +31,20 @@ public class ForgotPasswordCommandHandler : MediatR.IRequestHandler<ForgotPasswo
         var resetToken = _tokenService.GeneratePasswordResetToken();
         var expiry = _tokenService.GetPasswordResetTokenExpiryDate();
 
-        var createResetResult = await _authService.CreatePasswordResetTokenAsync(user.Id, resetToken, expiry);
-        if (createResetResult.IsFailed)
-            return Result.Fail(createResetResult.Errors);
+        var createResult = await _authService.CreatePasswordResetTokenAsync(user.Id, resetToken, expiry);
+        if (createResult.IsFailed)
+            return Result.Fail(createResult.Errors);
 
         return Result.Ok();
     }
 }
 
-public record ForgotPasswordCommand(ForgotPasswordRequest request) : MediatR.IRequest<Result<ForgotPasswordResponse>>;
-
-    public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCommand>
+public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCommand>
+{
+    public ForgotPasswordCommandValidator()
     {
-        public ForgotPasswordCommandValidator()
-        {
-            RuleFor(x => x.request.Email)
-                .NotEmpty().WithMessage("Email is required.")
-                .EmailAddress().WithMessage("Email must be a valid email address.");
-        }
+        RuleFor(x => x.request.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("Email must be a valid email address.");
     }
+}
